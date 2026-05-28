@@ -1234,7 +1234,8 @@ function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  if(tab==='alerts')notifs.forEach(n=>n.unread=false);updateBadges();
+  if(tab==='alerts')notifs.forEach(n=>n.unread=false);
+  updateBadges();
 }
 function prevImg(input,prevId){
   const p=document.getElementById(prevId);
@@ -1535,13 +1536,6 @@ function toggleSidebar(){
 function expandSidebar(){
   const sb=document.getElementById('sidebar');
   if(sb.classList.contains('collapsed'))sb.classList.remove('collapsed');
-}
-// Auto-collapse sidebar on mobile after tab switch
-// Mobile: expand sidebar when switching tabs
-const _origSwitchTab=switchTab;
-function switchTab(tab){
-  _origSwitchTab(tab);
-  if(window.innerWidth<=700)expandSidebar();
 }
 // Start collapsed on mobile
 if(window.innerWidth<=700){
