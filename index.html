@@ -311,6 +311,9 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
           <span style="font-size:1.3rem">🇧🇪</span>
           <div><strong>itsme® integratie</strong><br>In de toekomst: log in met itsme voor officiële adresverificatie via eID.<br><span class="itsme-badge">Vereist registratie als officiële app</span></div>
         </div>
+        <div style="text-align:center;margin-top:10px;font-size:0.74rem;color:var(--mid);">
+          Door een account aan te maken ga je akkoord met ons <a href="#" onclick="openPrivacy();return false" style="color:var(--terracotta);text-decoration:underline;">privacybeleid</a>.
+        </div>
       </div>
       <div id="register-area" style="display:none">
         <div class="form-group">
@@ -481,9 +484,112 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 
 <div class="toast" id="toast"></div>
 
+<!-- COOKIE BANNER -->
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--charcoal);color:white;padding:14px 20px;z-index:5000;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,0.2);">
+  <div style="font-size:0.82rem;flex:1;min-width:200px;">
+    🍪 KattenKaart gebruikt localStorage om jouw sessie te bewaren. Geen tracking, geen advertenties.
+    <a href="#" onclick="openPrivacy();return false" style="color:var(--terracotta-light);text-decoration:underline;">Privacybeleid</a>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Akkoord</button>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;" onclick="rejectCookies()">Weigeren</button>
+  </div>
+</div>
+
+<!-- PRIVACY MODAL -->
+<div class="modal-overlay" id="privacy-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">Privacybeleid</div>
+      <button class="modal-close" onclick="closeModal('privacy-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="font-size:0.84rem;line-height:1.7;color:var(--charcoal);">
+      <p><strong>KattenKaart België</strong> — Laatst bijgewerkt: mei 2025</p>
+      <hr class="divider">
+      <p><strong>Welke gegevens verzamelen we?</strong></p>
+      <ul style="margin:6px 0 12px 18px;">
+        <li>Gebruikersnaam en gehashed wachtwoord</li>
+        <li>E-mailadres (optioneel, alleen voor meldingen)</li>
+        <li>Thuisadres van katten (straatnaam + stad, huisnummer verborgen voor publiek)</li>
+        <li>Foto's van katten en spottings</li>
+        <li>Locatiegegevens van spottings</li>
+      </ul>
+      <p><strong>Waarom?</strong></p>
+      <ul style="margin:6px 0 12px 18px;">
+        <li>Om katten te kunnen registreren en terugvinden</li>
+        <li>Om eigenaren te verwittigen bij een spotting (via e-mail)</li>
+        <li>Om jouw sessie te bewaren (localStorage)</li>
+      </ul>
+      <p><strong>Hoe lang bewaren we het?</strong></p>
+      <p style="margin-bottom:12px;">Zolang je account actief is. Je kan je account en alle bijbehorende data op elk moment verwijderen via Instellingen → Account verwijderen.</p>
+      <p><strong>Delen we data met derden?</strong></p>
+      <p style="margin-bottom:12px;">Nee. Data wordt opgeslagen via Supabase (EU-servers, Ierland) en foto's via Supabase Storage. Geen advertenties, geen tracking.</p>
+      <p><strong>Jouw rechten (GDPR)</strong></p>
+      <ul style="margin:6px 0 12px 18px;">
+        <li>Recht op inzage van jouw data</li>
+        <li>Recht op verwijdering (account verwijderen)</li>
+        <li>Recht op correctie (profiel bewerken)</li>
+      </ul>
+      <p><strong>Contact</strong></p>
+      <p>Vragen over privacy? Stuur een bericht via de app of open een GitHub issue op Jana191997/Kattenkaart.</p>
+      <hr class="divider">
+      <button class="btn btn-primary btn-full" onclick="closeModal('privacy-modal')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT CAT MODAL -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title" id="report-modal-title">Inhoud melden</div>
+      <button class="modal-close" onclick="closeModal('report-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Reden</label>
+        <select class="form-select" id="report-reason">
+          <option value="">— Selecteer een reden —</option>
+          <option value="fake">Nep of spam</option>
+          <option value="photo">Ongepaste foto</option>
+          <option value="privacy">Privacyschending</option>
+          <option value="other">Andere</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Toelichting (optioneel)</label>
+        <textarea class="form-textarea" id="report-note" placeholder="Meer uitleg..."></textarea>
+      </div>
+      <button class="btn btn-lost btn-full" onclick="submitReport()">Melding versturen</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT MODAL -->
+<div class="modal-overlay" id="delete-account-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Account verwijderen</div>
+      <button class="modal-close" onclick="closeModal('delete-account-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box" style="margin-bottom:14px;border-color:var(--lost);color:var(--lost);">
+        ⚠️ Dit verwijdert jouw account, al jouw katten en alle bijbehorende spottings <strong>permanent</strong>.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bevestig met jouw wachtwoord</label>
+        <input class="form-input" id="delete-password" type="password" placeholder="Jouw wachtwoord">
+      </div>
+      <button class="btn btn-lost btn-full" onclick="deleteAccount()">Ja, verwijder mijn account</button>
+    </div>
+  </div>
+</div>
+
 <!-- USER DROPDOWN MENU -->
 <div class="user-menu" id="user-menu">
   <div class="user-menu-item" onclick="openProfileModal()">✏️ Profiel bewerken</div>
+  <div class="user-menu-item" onclick="openPrivacy()">🔒 Privacybeleid</div>
+  <div class="user-menu-item danger" onclick="openModal('delete-account-modal');document.getElementById('user-menu').classList.remove('open')">🗑️ Account verwijderen</div>
   <div class="user-menu-item danger" onclick="doLogout()">🚪 Uitloggen</div>
 </div>
 
@@ -903,6 +1009,7 @@ function showDetail(catId){
   const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
   let btns=`<button class="btn btn-primary btn-sm" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${cat.id}'">🐾 Gespot!</button>`;
   btns+=`<span style="font-size:0.74rem;color:var(--mid);align-self:center">${n} bevestigd${n!==1?'e':''} spot${n!==1?'s':''}</span>`;
+  if(!isOwn)btns+=`<button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="openReportModal('${cat.id}')">🚩 Melden</button>`;
   if(isOwn){
     btns+=`<button class="btn btn-outline btn-sm" onclick="openEditCat('${cat.id}')">✏️ Bewerken</button>`;
     if(!cat.lost)btns+=`<button class="btn btn-lost btn-sm" onclick="openLostModal('${cat.id}')">🚨 Vermist</button>`;
@@ -1412,6 +1519,7 @@ async function loadFromSupabase(){
 }
 
 window.onload=async()=>{
+  initCookieBanner();
   initMap();
   await loadFromSupabase();
   // Sessie herstellen van localStorage
@@ -1729,6 +1837,80 @@ function fileToBase64(file){
 // Store pending file objects (not base64) for upload on save
 let pendingMainPhoto=null;
 let pendingExtraPhotos=[];
+
+// COOKIE BANNER
+function initCookieBanner(){
+  try{
+    const consent=localStorage.getItem('kk_cookie_consent');
+    if(!consent){
+      document.getElementById('cookie-banner').style.display='flex';
+    }
+  }catch(e){document.getElementById('cookie-banner').style.display='flex';}
+}
+function acceptCookies(){
+  try{localStorage.setItem('kk_cookie_consent','accepted');}catch(e){}
+  document.getElementById('cookie-banner').style.display='none';
+}
+function rejectCookies(){
+  // Still hide banner but don't save preference (will show again next visit)
+  document.getElementById('cookie-banner').style.display='none';
+}
+function openPrivacy(){
+  document.getElementById('user-menu').classList.remove('open');
+  openModal('privacy-modal');
+}
+
+// REPORT CAT
+let reportCatId=null;
+function openReportModal(catId){
+  reportCatId=catId;
+  const cat=cats.find(c=>c.id===catId);
+  document.getElementById('report-modal-title').textContent=`${cat?cat.name:''} melden`;
+  document.getElementById('report-reason').value='';
+  document.getElementById('report-note').value='';
+  openModal('report-modal');
+}
+function submitReport(){
+  const reason=document.getElementById('report-reason').value;
+  if(!reason){toast('Selecteer een reden.',true);return;}
+  const note=document.getElementById('report-note').value;
+  const cat=cats.find(c=>c.id===reportCatId);
+  // Store report in Supabase (simple log)
+  sb.from('reports').insert({
+    cat_id:reportCatId,reason,note,
+    reporter:me?.name||'Anoniem',
+    created_at:new Date().toISOString()
+  }).then(()=>{});
+  closeModal('report-modal');
+  toast('Melding verstuurd. Bedankt!');
+}
+
+// DELETE ACCOUNT
+async function deleteAccount(){
+  if(!me)return;
+  const pw=document.getElementById('delete-password').value;
+  const ok=await verifyPassword(pw,me.pin);
+  if(!ok){toast('Onjuist wachtwoord.',true);return;}
+  showConfirm('🗑️','Zeker weten?',
+    'Dit verwijdert alles permanent en kan niet ongedaan worden gemaakt.',
+    'Ja, verwijder alles','btn-lost',async()=>{
+      // Delete all own cats (cascade deletes sightings)
+      const myCatIds=cats.filter(c=>c.owner===me.id).map(c=>c.id);
+      for(const id of myCatIds){
+        await sb.from('cats').delete().eq('id',id);
+      }
+      await sb.from('users').delete().eq('id',me.id);
+      try{localStorage.removeItem('kk_session');localStorage.removeItem('kk_cookie_consent');}catch(e){}
+      closeModal('delete-account-modal');
+      me=null;
+      document.getElementById('header-username').textContent='Log in';
+      document.getElementById('header-avatar').textContent='👤';
+      cats=cats.filter(c=>!myCatIds.includes(c.id));
+      sightings=sightings.filter(s=>!myCatIds.includes(s.catId));
+      renderAll();
+      toast('Account verwijderd. Tot ziens! 👋');
+    });
+}
 
 // MOBILE SIDEBAR TOGGLE
 function toggleSidebar(){
