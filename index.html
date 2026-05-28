@@ -763,17 +763,27 @@ function renderPendingList(){
 
 function renderAlerts(){
   const el=document.getElementById('alerts-list');
+  // Lost cat alerts visible to everyone
   const lostAlerts=cats.filter(c=>c.lost).map(c=>({
     id:'la-'+c.id,title:`🚨 ${c.name} is vermist!`,
     body:(()=>{
       const parts=c.address.split(',');
-      const street=parts[0]||'';
+      const street=(parts[0]||'').replace(/\s*\d+\s*$/,'').trim();
       const city=parts[1]?parts[1].trim().replace(/\d{4}/,'').trim():'';
       return `${c.name} (${c.breed}) vermist${street?' in de buurt van '+street:''}${city?' ('+city+')':''}. Heb je hem/haar gezien?`;
     })(),
     time:new Date().toISOString(),unread:true,type:'lost',catId:c.id
   }));
-  const all=[...lostAlerts,...notifs].slice(0,25);
+  // Sighting + found notifications only for own cats when logged in
+  const myCatIds=me?cats.filter(c=>c.owner===me.id).map(c=>c.id):[];
+  const filteredNotifs=notifs.filter(n=>{
+    if(n.type==='info')return true; // welcome message always visible
+    if(n.type==='lost')return false; // handled by lostAlerts above, no duplicates
+    if(n.type==='found')return me&&myCatIds.includes(n.catId);
+    if(n.type==='sighting')return me&&myCatIds.includes(n.catId);
+    return me; // other notifs only when logged in
+  });
+  const all=[...lostAlerts,...filteredNotifs].slice(0,25);
   if(!all.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">🔔</div>Geen meldingen.</div>`;return;}
   el.innerHTML=all.map(n=>`<div class="notif-item${n.unread?' unread':''}">
     <div class="notif-title" ${n.catId?`onclick="switchTab('cats');showDetail('${n.catId}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px"`:''}>
@@ -870,7 +880,7 @@ async function doMarkLost(){
   notifs.unshift({id:'n'+Date.now(),title:`🚨 ${cat.name} is vermist!`,
     body:(()=>{
       const parts=cat.address.split(',');
-      const street=parts[0]||'';
+      const street=(parts[0]||'').replace(/\s*\d+\s*$/,'').trim();
       const city=parts[1]?parts[1].trim().replace(/\d{4}/,'').trim():'';
       const loc=street+(city?' ('+city+')':'');
       return `${cat.name} (${cat.breed}) vermist${loc?' bij '+loc:''}. ${msg}`.trim();
@@ -1132,8 +1142,7 @@ async function saveCat(){
   const bio=document.getElementById('f-bio').value.trim();
   const email=me.email||''; // use account email
   if(!name||!addr){toast('Vul naam en adres in.',true);return;}
-  toast('Foto uploaden...');
-  // Upload photos to Supabase Storage
+  // Upload photos (Storage or base64 fallback)
   let mainPhotoUrl=editCatId?cats.find(c=>c.id===editCatId)?.photo:null;
   if(pendingMainPhoto){
     mainPhotoUrl=await uploadPhoto(pendingMainPhoto,'cats');
@@ -1239,7 +1248,10 @@ function openModal(id){
     const noLogin=document.getElementById('need-login-msg');
     const fields=document.getElementById('cat-fields');
     noLogin.style.display=me?'none':'block';fields.style.display=me?'block':'none';
-    if(!editCatId)document.getElementById('cat-modal-title').textContent='Kat registreren';
+    if(!editCatId){
+      document.getElementById('cat-modal-title').textContent='Kat registreren';
+      clearCatForm(); // always clear when adding a new cat
+    }
   }
   if(id==='spot-modal'){
     const now=new Date();document.getElementById('sp-time').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -1528,19 +1540,34 @@ async function confirmDeleteSighting(id){
     });
 }
 
-// SUPABASE STORAGE UPLOAD
+// SUPABASE STORAGE UPLOAD (with base64 fallback)
 async function uploadPhoto(file, folder='cats'){
   if(!file)return null;
   try{
-    const ext=file.name.split('.').pop()||'jpg';
+    const ext=(file.name||'photo.jpg').split('.').pop()||'jpg';
     const filename=`${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const {data,error}=await sb.storage.from('cat-photos').upload(filename, file, {
-      cacheControl:'3600', upsert:false, contentType:file.type
+      cacheControl:'3600', upsert:false, contentType:file.type||'image/jpeg'
     });
-    if(error){console.error('Upload error:',error);return null;}
+    if(error){
+      console.warn('Storage upload failed, using base64 fallback:', error.message);
+      return await fileToBase64(file);
+    }
     const {data:{publicUrl}}=sb.storage.from('cat-photos').getPublicUrl(filename);
     return publicUrl;
-  }catch(e){console.error('Upload failed:',e);return null;}
+  }catch(e){
+    console.warn('Storage unavailable, using base64 fallback:', e);
+    return await fileToBase64(file);
+  }
+}
+
+function fileToBase64(file){
+  return new Promise((resolve)=>{
+    const r=new FileReader();
+    r.onload=e=>resolve(e.target.result);
+    r.onerror=()=>resolve(null);
+    r.readAsDataURL(file);
+  });
 }
 
 // Store pending file objects (not base64) for upload on save
