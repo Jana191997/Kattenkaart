@@ -111,10 +111,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--forest);color:white;padding:7px 15px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;}
 .map-hint.visible{opacity:1;}
-.lost-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--lost);color:white;
-  padding:8px 18px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;display:none;
-  white-space:nowrap;box-shadow:0 2px 12px rgba(176,48,48,0.3);}
-.lost-banner.visible{display:flex;align-items:center;gap:8px;}
+
 @media(max-width:700px){
   .lost-banner{top:auto;bottom:60px;left:50%;transform:translateX(-50%);
     white-space:normal;text-align:center;max-width:calc(100vw - 32px);
@@ -273,10 +270,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 
   <div class="map-container" style="flex:1;position:relative;">
     <div class="map-hint" id="map-hint">Klik op de kaart om een locatie te kiezen</div>
-    <div class="lost-banner" id="lost-banner">
-      <span onclick="switchTab('alerts')" style="cursor:pointer;">🚨 Vermiste katten in de buurt — tik voor meer info</span>
-      <span onclick="dismissLostBanner(event)" style="margin-left:10px;opacity:0.8;font-size:1rem;cursor:pointer;vertical-align:middle;">✕</span>
-    </div>
+
     <div class="nearby-panel" id="nearby-panel">
       <button class="detail-close" onclick="closeNearby()" style="position:absolute;top:10px;right:10px;">✕</button>
       <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:10px;">📡 Katten in jouw buurt</div>
@@ -821,7 +815,6 @@ function renderTerr(catId){
 
 function renderAll(){
   renderCatMkrs();renderSightMkrs();renderCatsList();renderSightList();renderPendingList();renderAlerts();updateCatSel();updateBadges();
-  updateLostBanner();
 }
 
 // SIDEBAR
