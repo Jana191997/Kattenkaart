@@ -77,6 +77,17 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .cat-card-body{padding:8px 10px;flex:1;min-width:0;overflow:hidden;}
 .section-label{font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
   color:var(--mid);padding:4px 2px 2px;}
+.sp-cat-opt{display:flex;align-items:center;gap:10px;padding:9px 11px;border:2px solid var(--border);
+  border-radius:10px;cursor:pointer;transition:all 0.15s;background:var(--cream);}
+.sp-cat-opt:hover{border-color:var(--terracotta);background:white;}
+.sp-cat-opt.selected{border-color:var(--terracotta);background:rgba(192,98,58,0.06);}
+.sp-cat-opt-thumb{width:46px;height:46px;border-radius:8px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;overflow:hidden;flex-shrink:0;}
+.sp-cat-opt-thumb img{width:100%;height:100%;object-fit:cover;}
+.sp-cat-opt-info{flex:1;}
+.sp-cat-opt-name{font-weight:700;font-size:0.9rem;}
+.sp-cat-opt-breed{font-size:0.75rem;color:var(--mid);}
+.sp-cat-opt-dist{font-size:0.7rem;color:var(--terracotta);margin-top:2px;}
 .emoji-opt{font-size:1.6rem;padding:6px 8px;border-radius:8px;cursor:pointer;border:2px solid transparent;
   transition:all 0.15s;background:var(--cream);}
 .emoji-opt:hover{border-color:var(--border);transform:scale(1.1);}
@@ -211,6 +222,8 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .nearby-dist{font-size:0.7rem;color:var(--mid);margin-top:2px;}
 .gps-dot{width:14px;height:14px;background:#1a73e8;border:3px solid white;border-radius:50%;
   box-shadow:0 0 0 4px rgba(26,115,232,0.25);}
+.spot-pin{width:24px;height:32px;position:relative;}
+.spot-pin::before{content:'📍';font-size:28px;position:absolute;top:-14px;left:-7px;}
 .photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
 .photo-gallery img{width:100%;height:70px;object-fit:cover;border-radius:7px;cursor:pointer;transition:opacity 0.2s;}
 .photo-gallery img:hover{opacity:0.85;}
@@ -440,48 +453,55 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 <div class="modal-overlay" id="spot-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Spotting melden</div>
+      <div class="modal-title" id="spot-modal-title">Spotting melden</div>
       <button class="modal-close" onclick="closeModal('spot-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Welke kat?</label>
-        <select class="form-select" id="sp-cat" onchange="onSpotCatChange()">
-          <option value="">— Selecteer een kat —</option>
-          <option value="unknown">Ik weet het niet — help me uitvinden!</option>
-        </select>
+      <!-- STAP 1: Locatie -->
+      <div id="spot-step-1">
+        <div style="font-size:0.82rem;color:var(--mid);margin-bottom:12px;">Waar heb je de kat gezien? Kies een locatie op de kaart of gebruik GPS.</div>
+        <button class="btn btn-forest btn-full" style="margin-top:0" onclick="startPickLoc()">🗺️ Kies op kaart</button>
+        <button class="btn btn-outline btn-full" onclick="useGPSForSpot()">📍 Gebruik mijn locatie</button>
+        <div id="sp-coords" style="font-size:0.75rem;color:var(--mid);margin-top:8px;min-height:18px;text-align:center;"></div>
       </div>
-      <div id="matcher-area" style="display:none;margin-bottom:11px;"></div>
-      <div class="form-group">
-        <label class="form-label">Locatie</label>
-        <input class="form-input" id="sp-loc" placeholder="bv. Broodstraat, bij apotheek" readonly>
-        <button class="btn btn-forest btn-sm" style="margin-top:5px;width:100%" onclick="startPickLoc()">📍 Kies op kaart</button>
-        <div id="sp-coords" style="font-size:0.71rem;color:var(--mid);margin-top:3px;"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Datum & tijd</label>
-          <input class="form-input" type="datetime-local" id="sp-time">
+      <!-- STAP 2: Kat kiezen + details -->
+      <div id="spot-step-2" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-outline btn-sm" onclick="backToStep1()">← Terug</button>
+          <div style="font-size:0.78rem;color:var(--mid);" id="sp-loc-display"></div>
         </div>
         <div class="form-group">
-          <label class="form-label">Jouw naam</label>
-          <input class="form-input" id="sp-reporter" placeholder="Optioneel — of anoniem laten">
+          <label class="form-label">Welke kat heb je gezien?</label>
+          <div id="sp-cat-picker" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div id="sp-cat-selected" style="display:none;">
+          <hr class="divider">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Datum & tijd</label>
+              <input class="form-input" type="datetime-local" id="sp-time">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jouw naam</label>
+              <input class="form-input" id="sp-reporter" placeholder="Optioneel">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notities</label>
+            <textarea class="form-textarea" id="sp-notes" placeholder="Wat deed de kat?..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Foto (optioneel)</label>
+            <div class="file-upload" onclick="document.getElementById('sp-photo').click()">
+              <input type="file" id="sp-photo" accept="image/*" onchange="prevImg(this,'sp-prev')">
+              <div class="file-upload-icon">📸</div>
+              <div class="file-upload-text">Upload een foto</div>
+            </div>
+            <img id="sp-prev" class="preview-img" style="display:none">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="submitSighting()">Spotting versturen</button>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Notities</label>
-        <textarea class="form-textarea" id="sp-notes" placeholder="Wat deed de kat?..."></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Foto (optioneel)</label>
-        <div class="file-upload" onclick="document.getElementById('sp-photo').click()">
-          <input type="file" id="sp-photo" accept="image/*" onchange="prevImg(this,'sp-prev')">
-          <div class="file-upload-icon">📸</div>
-          <div class="file-upload-text">Upload een foto</div>
-        </div>
-        <img id="sp-prev" class="preview-img" style="display:none">
-      </div>
-      <button class="btn btn-primary btn-full" onclick="submitSighting()">Spotting versturen</button>
     </div>
   </div>
 </div>
@@ -990,16 +1010,15 @@ function renderAlerts(){
     <div style="font-size:0.77rem;margin-top:2px">${n.body}</div>
     ${n.type==='lost'?`<div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="switchTab('cats');showDetail('${n.catId}')">📋 Bekijk profiel</button>
-      <button class="btn btn-sm" style="background:rgba(192,98,58,0.12);color:var(--terracotta)" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${n.catId}'">🐾 Ik heb deze kat gezien!</button>
+      <button class="btn btn-sm" style="background:rgba(192,98,58,0.12);color:var(--terracotta)" onclick="openSpotForCat('${n.catId}')">🐾 Ik heb deze kat gezien!</button>
     </div>`:''}
     <div style="font-size:0.68rem;color:var(--mid);margin-top:4px">${fmt(n.time)}</div>
   </div>`).join('');
 }
 
 function updateCatSel(){
-  const sel=document.getElementById('sp-cat');
-  while(sel.options.length>2)sel.remove(2);
-  cats.forEach(cat=>{const o=new Option(`${cat.name} (${cat.breed})`,cat.id);sel.appendChild(o);});
+  // Cat picker is now rebuilt dynamically in buildCatPicker()
+  // Keep for compatibility but no longer needed for a select element
 }
 
 function updateBadges(){
@@ -1044,7 +1063,7 @@ function showDetail(catId){
   const bioEl=document.getElementById('detail-bio');
   bioEl.textContent=cat.bio;
   const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
-  let btns=`<button class="btn btn-primary btn-sm" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${cat.id}'">🐾 Gespot!</button>`;
+  let btns=`<button class="btn btn-primary btn-sm" onclick="openSpotForCat('${cat.id}')">🐾 Gespot!</button>`;
   btns+=`<span style="font-size:0.74rem;color:var(--mid);align-self:center">${n} bevestigd${n!==1?'e':''} spot${n!==1?'s':''}</span>`;
   if(!isOwn)btns+=`<button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="openReportModal('${cat.id}')">🚩 Melden</button>`;
   if(isOwn){
@@ -1149,8 +1168,8 @@ function gd(a,b,c,d){return Math.sqrt((a-c)**2+(b-d)**2);}
 
 // SIGHTING ACTIONS
 async function submitSighting(){
-  const catId=document.getElementById('sp-cat').value;
-  const loc=document.getElementById('sp-loc').value.trim();
+  const catId=selectedSpotCatId;
+  const loc=pickedLat?`Kaartlocatie (${pickedLat.toFixed(4)}, ${pickedLng.toFixed(4)})`:'Onbekend';
   const time=document.getElementById('sp-time').value;
   const notes=document.getElementById('sp-notes').value.trim();
   const reporter=document.getElementById('sp-reporter').value.trim()||me?.name||'Anoniem';
@@ -1209,8 +1228,8 @@ function startPickLoc(){
   closeModal('spot-modal');
   pickingLoc=true; pickingLocForSpot=true;
   document.getElementById('map-hint').classList.add('visible');
-  document.getElementById('sp-coords').textContent='';
-  document.getElementById('sp-loc').value='';
+  const coords=document.getElementById('sp-coords');
+  if(coords)coords.textContent='';
 }
 
 // ADDRESS AUTOCOMPLETE
@@ -1496,8 +1515,11 @@ function openModal(id){
     }
   }
   if(id==='spot-modal'){
-    const now=new Date();document.getElementById('sp-time').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
-    if(me)document.getElementById('sp-reporter').value=me.name;
+    const now=new Date();
+    const timeEl=document.getElementById('sp-time');
+    if(timeEl)timeEl.value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+    const repEl=document.getElementById('sp-reporter');
+    if(repEl&&me)repEl.value=me.name;
   }
   if(id==='login-modal'){buildPinGrids();resetLoginPin();}
 }
@@ -1524,7 +1546,18 @@ function prevImg(input,prevId){
 }
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
 function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-birthdate'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';currentEmoji='🐱';setEmojiPicker('🐱');renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
-function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;pendingSpotPhoto=null;}
+function clearSpotForm(){
+  selectedSpotCatId=null;
+  const notes=document.getElementById('sp-notes');if(notes)notes.value='';
+  const coords=document.getElementById('sp-coords');if(coords)coords.textContent='';
+  const p=document.getElementById('sp-prev');if(p){p.src='';p.style.display='none';}
+  pickedLat=null;pickedLng=null;pendingSpotPhoto=null;
+  if(spotPinMarker){map.removeLayer(spotPinMarker);spotPinMarker=null;}
+  // Reset to step 1
+  const s1=document.getElementById('spot-step-1');if(s1)s1.style.display='block';
+  const s2=document.getElementById('spot-step-2');if(s2)s2.style.display='none';
+  const sel=document.getElementById('sp-cat-selected');if(sel)sel.style.display='none';
+}
 function tryParse(s){try{return JSON.parse(s);}catch{return[];}}
 function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
 
@@ -2005,6 +2038,121 @@ function checkLostBannerVisibility(lat,lng){
     lostBannerDismissed=true;
     document.getElementById('lost-banner').classList.remove('visible');
   }
+}
+
+// SPOT PIN MARKER
+let spotPinMarker=null;
+function placeSpotPin(lat,lng){
+  if(spotPinMarker)map.removeLayer(spotPinMarker);
+  spotPinMarker=L.marker([lat,lng],{
+    icon:L.divIcon({html:'<div class="spot-pin"></div>',className:'',iconSize:[24,32],iconAnchor:[7,28]})
+  }).addTo(map);
+}
+
+// TWO-STEP SPOT FLOW
+let selectedSpotCatId=null;
+
+function useGPSForSpot(){
+  if(!navigator.geolocation){toast('GPS niet beschikbaar.',true);return;}
+  document.getElementById('sp-coords').textContent='📡 Locatie ophalen...';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      pickedLat=pos.coords.latitude;
+      pickedLng=pos.coords.longitude;
+      pickingLocForSpot=false;
+      placeSpotPin(pickedLat,pickedLng);
+      currentLat=pickedLat;currentLng=pickedLng;
+      goToStep2();
+    },
+    err=>{toast('GPS fout — kies handmatig op kaart.',true);},
+    {enableHighAccuracy:true,timeout:8000}
+  );
+}
+
+function goToStep2(){
+  document.getElementById('spot-step-1').style.display='none';
+  document.getElementById('spot-step-2').style.display='block';
+  document.getElementById('sp-coords').textContent='';
+  // Show location label
+  const locEl=document.getElementById('sp-loc-display');
+  locEl.textContent=pickedLat?`📍 ${pickedLat.toFixed(4)}, ${pickedLng.toFixed(4)}`:'';
+  // Build cat picker with nearby cats
+  buildCatPicker();
+}
+
+function backToStep1(){
+  document.getElementById('spot-step-1').style.display='block';
+  document.getElementById('spot-step-2').style.display='none';
+  document.getElementById('sp-cat-selected').style.display='none';
+  selectedSpotCatId=null;
+}
+
+function buildCatPicker(){
+  const picker=document.getElementById('sp-cat-picker');
+  const lat=pickedLat||currentLat||OUD[0];
+  const lng=pickedLng||currentLng||OUD[1];
+  
+  // Sort cats by distance
+  const sorted=cats
+    .map(c=>({cat:c,dist:gd(lat,lng,c.lat,c.lng)}))
+    .sort((a,b)=>a.dist-b.dist)
+    .slice(0,8); // max 8 cats shown
+  
+  let html=sorted.map(({cat,dist})=>{
+    const distM=Math.round(dist*111000);
+    const distStr=distM<1000?distM+'m':(dist*111).toFixed(1)+'km';
+    return`<div class="sp-cat-opt" id="sp-opt-${cat.id}" onclick="selectSpotCat('${cat.id}')">
+      <div class="sp-cat-opt-thumb">${cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱')}</div>
+      <div class="sp-cat-opt-info">
+        <div class="sp-cat-opt-name">${cat.name}${cat.lost?' 🚨':''}</div>
+        <div class="sp-cat-opt-breed">${cat.breed}</div>
+        <div class="sp-cat-opt-dist">📍 ${distStr} van thuisadres</div>
+      </div>
+      <div style="font-size:1.2rem;color:var(--border)">○</div>
+    </div>`;
+  }).join('');
+  
+  // Add "not sure" option
+  html+=`<div class="sp-cat-opt" id="sp-opt-unknown" onclick="selectSpotCat('unknown')">
+    <div class="sp-cat-opt-thumb" style="font-size:1.6rem;">🔍</div>
+    <div class="sp-cat-opt-info">
+      <div class="sp-cat-opt-name">Ik weet het niet</div>
+      <div class="sp-cat-opt-breed">Help me uitvinden welke kat dit is</div>
+    </div>
+    <div style="font-size:1.2rem;color:var(--border)">○</div>
+  </div>`;
+  
+  picker.innerHTML=html;
+}
+
+function selectSpotCat(catId){
+  selectedSpotCatId=catId;
+  // Update visual selection
+  document.querySelectorAll('.sp-cat-opt').forEach(el=>el.classList.remove('selected'));
+  document.querySelectorAll('.sp-cat-opt').forEach(el=>{
+    el.querySelector('div:last-child').textContent='○';
+  });
+  const opt=document.getElementById('sp-opt-'+catId);
+  if(opt){
+    opt.classList.add('selected');
+    opt.querySelector('div:last-child').textContent='●';
+  }
+  // Show details form
+  document.getElementById('sp-cat-selected').style.display='block';
+  // Scroll to details
+  document.getElementById('sp-cat-selected').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function openSpotForCat(catId){
+  openModal('spot-modal');
+  // If we have a location, go straight to step 2 and pre-select the cat
+  if(pickedLat||currentLat){
+    pickedLat=pickedLat||currentLat;
+    pickedLng=pickedLng||currentLng;
+    goToStep2();
+    setTimeout(()=>selectSpotCat(catId),100);
+  }
+  // Otherwise stay on step 1 so user picks location first
 }
 
 // MOBILE SIDEBAR TOGGLE
