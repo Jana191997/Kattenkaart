@@ -802,8 +802,18 @@ async function markFound(catId){
 function onSpotCatChange(){
   const val=document.getElementById('sp-cat').value;
   const area=document.getElementById('matcher-area');
-  if(val==='unknown'&&(pickedLat||true)){area.style.display='block';area.innerHTML=buildMatcher(pickedLat||OUD[0],pickedLng||OUD[1]);}
-  else area.style.display='none';
+  if(val==='unknown'){
+    area.style.display='block';
+    if(pickedLat){
+      area.innerHTML=buildMatcher(pickedLat,pickedLng);
+    } else {
+      area.innerHTML=`<div style="font-size:0.8rem;color:var(--mid);padding:8px;text-align:center;">
+        📍 Kies eerst een locatie op de kaart om te zien welke kat je waarschijnlijk gespot hebt.
+      </div>`;
+    }
+  } else {
+    area.style.display='none';
+  }
 }
 
 function buildMatcher(lat,lng){
@@ -1201,8 +1211,14 @@ let gpsMarker=null;
 function openNearby(){
   const panel=document.getElementById('nearby-panel');
   panel.classList.add('open');
-  document.getElementById('nearby-content').innerHTML=
-    '<div style="font-size:0.82rem;color:var(--mid);text-align:center;padding:10px 0;">Klik "Gebruik GPS" of kies een locatie op de kaart.</div>';
+  // Only show cats if we already have a GPS location
+  if(pickedLat||gpsMarker){
+    const pos=gpsMarker?map.getCenter():null;
+    showNearbyCats(pickedLat||OUD[0], pickedLng||OUD[1]);
+  } else {
+    document.getElementById('nearby-content').innerHTML=
+      '<div style="font-size:0.82rem;color:var(--mid);text-align:center;padding:10px 0;">Klik "Gebruik GPS" of kies een locatie op de kaart om katten in jouw buurt te zien.</div>';
+  }
 }
 function closeNearby(){document.getElementById('nearby-panel').classList.remove('open');}
 
