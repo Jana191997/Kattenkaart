@@ -674,7 +674,7 @@ function openLostModal(catId){
   openModal('lost-modal');
 }
 
-function doMarkLost(){
+async function doMarkLost(){
   const cat=cats.find(c=>c.id===lostCatId);if(!cat)return;
   cat.lost=true;
   await sb.from('cats').update({lost:true}).eq('id',lostCatId);
@@ -686,7 +686,7 @@ function doMarkLost(){
   renderAll();showDetail(lostCatId);toast(`🚨 Vermeldingsmelding voor ${cat.name} verstuurd!`);switchTab('alerts');
 }
 
-function markFound(catId){
+async function markFound(catId){
   const cat=cats.find(c=>c.id===catId);if(!cat)return;
   cat.lost=false;
   await sb.from('cats').update({lost:false}).eq('id',catId);
@@ -734,7 +734,7 @@ function buildMatcher(lat,lng){
 function gd(a,b,c,d){return Math.sqrt((a-c)**2+(b-d)**2);}
 
 // SIGHTING ACTIONS
-function submitSighting(){
+async function submitSighting(){
   const catId=document.getElementById('sp-cat').value;
   const loc=document.getElementById('sp-loc').value.trim();
   const time=document.getElementById('sp-time').value;
@@ -915,7 +915,7 @@ function openEditCat(catId){
   openModal('add-cat-modal');
 }
 
-function saveCat(){
+async function saveCat(){
   if(!me){toast('Log eerst in!',true);return;}
   const name=document.getElementById('f-name').value.trim();
   const addr=document.getElementById('f-addr').value.trim();
@@ -981,7 +981,7 @@ function tryLogin(){
   const u=users.find(u=>u.name.toLowerCase()===name&&u.pin===loginPin);
   if(u){setMe(u);closeModal('login-modal');}else{toast('Ongeldige naam of PIN.',true);resetLoginPin();}
 }
-function doRegister(){
+async function doRegister(){
   const name=document.getElementById('reg-name').value.trim();
   if(!name){toast('Vul een naam in.',true);return;}
   if(regPin.length<4){toast('Kies een 4-cijferige PIN.',true);return;}
@@ -1067,12 +1067,12 @@ window.onload=async()=>{
   await loadFromSupabase();
   // Auto-login eerste gebruiker als die bestaat, anders wachten
   if(users.length)setMe(users[0]);
-  // PWA service worker registreren
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/sw.js')
-      .then(r=>console.log('SW geregistreerd:',r.scope))
-      .catch(e=>console.log('SW fout:',e));
-  }
+  // PWA service worker -- tijdelijk uitgeschakeld tijdens development
+  // if('serviceWorker' in navigator){
+  //   navigator.serviceWorker.register('/sw.js')
+  //     .then(r=>console.log('SW geregistreerd:',r.scope))
+  //     .catch(e=>console.log('SW fout:',e));
+  // }
 };
 
 // GPS + NEARBY PANEL
@@ -1188,7 +1188,7 @@ function openProfileModal(){
   document.getElementById('prof-confirm-pin').value='';
   openModal('profile-modal');
 }
-function saveProfile(){
+async function saveProfile(){
   if(!me)return;
   const name=document.getElementById('prof-name').value.trim();
   const oldPin=document.getElementById('prof-old-pin').value;
@@ -1242,7 +1242,7 @@ async function deleteCat(catId){
 }
 
 // UNDO / DELETE SIGHTING
-function undoConfirmS(id){
+async function undoConfirmS(id){
   const s=sightings.find(x=>x.id===id);if(!s)return;
   showConfirm('↩','Spotting terugzetten?',
     'De spotting wordt teruggezet naar "in behandeling" en het territorium wordt aangepast.',
@@ -1253,7 +1253,7 @@ function undoConfirmS(id){
       toast('Spotting teruggedraaid naar pending.');
     });
 }
-function confirmDeleteSighting(id){
+async function confirmDeleteSighting(id){
   showConfirm('🗑️','Spotting verwijderen?',
     'De spotting wordt permanent verwijderd en het territorium verkleint.',
     'Ja, verwijderen','btn-lost',()=>{
