@@ -739,25 +739,19 @@ function centerOnOwnCats(){
 
 function onMapClick(e){
   const lat=e.latlng.lat, lng=e.latlng.lng;
-  // Always update current location silently
   currentLat=lat; currentLng=lng;
-  placeGPSDot(lat,lng);
-  renderCatsList();
-
   checkLostBannerVisibility(lat,lng);
+
   if(pickingLocForSpot){
-    // User came from spot modal — fill in location and go back
     pickingLocForSpot=false; pickingLoc=false;
-    document.getElementById('map-hint').classList.remove('visible');
     pickedLat=lat; pickedLng=lng;
-    document.getElementById('sp-coords').textContent=`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    document.getElementById('sp-loc').value=`Kaartlocatie (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    document.getElementById('map-hint').classList.remove('visible');
+    placeSpotPin(lat,lng);
     openModal('spot-modal');
-    if(document.getElementById('sp-cat').value==='unknown'){onSpotCatChange();}
-    toast('Locatie ingesteld! ✓');
+    goToStep2();
   } else {
-    // Normal click — silently update location, cats tab already shows nearby
-    // Don't force tab switch so user can stay on whichever tab they're on
+    placeGPSDot(lat,lng);
+    renderCatsList();
   }
 }
 
