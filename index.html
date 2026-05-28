@@ -170,6 +170,18 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .nearby-dist{font-size:0.7rem;color:var(--mid);margin-top:2px;}
 .gps-dot{width:14px;height:14px;background:#1a73e8;border:3px solid white;border-radius:50%;
   box-shadow:0 0 0 4px rgba(26,115,232,0.25);}
+.photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+.photo-gallery img{width:100%;height:70px;object-fit:cover;border-radius:7px;cursor:pointer;transition:opacity 0.2s;}
+.photo-gallery img:hover{opacity:0.85;}
+.photo-add-btn{width:100%;height:70px;border:2px dashed var(--border);border-radius:7px;background:var(--cream);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.4rem;transition:all 0.2s;color:var(--mid);}
+.photo-add-btn:hover{border-color:var(--terracotta);color:var(--terracotta);}
+.cat-main-photo{width:100%;height:200px;object-fit:cover;border-radius:10px;margin-bottom:8px;cursor:pointer;}
+.cat-main-photo-placeholder{width:100%;height:180px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:4rem;margin-bottom:8px;}
+.cluster-badge{position:absolute;top:-4px;right:-4px;background:var(--terracotta);color:white;
+  border-radius:50%;width:18px;height:18px;font-size:0.65rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;border:2px solid white;}
 </style>
 </head>
 <body>
@@ -269,6 +281,10 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
           <label class="form-label">Naam</label>
           <input class="form-input" id="reg-name" placeholder="Jouw naam of bijnaam">
         </div>
+        <div class="form-group">
+          <label class="form-label">E-mailadres <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(voor meldingen als jouw kat gespot wordt)</span></label>
+          <input class="form-input" id="reg-email" type="email" placeholder="jouw@email.be">
+        </div>
         <label class="form-label">Kies een PIN (4 cijfers)</label>
         <div class="pin-display" id="reg-pin-disp">····</div>
         <div class="pin-dots" id="reg-pin-dots">
@@ -322,11 +338,12 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
           </div>
           <img id="f-prev" class="preview-img" style="display:none">
         </div>
-        <div class="form-group">
-          <label class="form-label">E-mail voor meldingen <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(voor later — wanneer Supabase is gekoppeld)</span></label>
-          <input class="form-input" id="f-email" type="email" placeholder="jouw@email.be">
-          <div style="font-size:0.72rem;color:var(--mid);margin-top:3px;">📬 Je ontvangt een e-mail zodra jouw kat gespot wordt.</div>
-        </div>
+        <div class="info-box" style="margin-bottom:8px;">📬 Meldingen worden verstuurd naar het e-mailadres van jouw account.</div>
+        <hr class="divider">
+        <label class="form-label">Extra foto's <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(max. 3)</span></label>
+        <div class="photo-gallery" id="extra-photos-preview"></div>
+        <input type="file" id="f-extra-photos" accept="image/*" multiple style="display:none" onchange="addExtraPhotos(this)">
+        <button class="btn btn-outline btn-full" style="margin-top:6px" onclick="document.getElementById('f-extra-photos').click()">+ Foto toevoegen</button>
         <button class="btn btn-primary btn-full" onclick="saveCat()">Kat opslaan</button>
       </div>
     </div>
@@ -490,12 +507,39 @@ function onMapClick(e){
   if(!me){showNearbyFromMap(pickedLat,pickedLng);}
 }
 
-function mkIcon(cat){
+// Breed → emoji mapping
+function breedEmoji(breed){
+  if(!breed)return'🐱';
+  const b=breed.toLowerCase();
+  if(b.includes('tijger')||b.includes('tabby')||b.includes('gestreept'))return'🐯';
+  if(b.includes('zwart wit')||b.includes('zwart-wit')||b.includes('tuxedo'))return'🐱';
+  if(b.includes('zwart'))return'🖤';
+  if(b.includes('oranje')||b.includes('rood')||b.includes('ros')||b.includes('gember'))return'🟠';
+  if(b.includes('wit'))return'🤍';
+  if(b.includes('grijs')||b.includes('blauw'))return'🐈';
+  if(b.includes('schildpad')||b.includes('tortie')||b.includes('calico'))return'🐈‍⬛';
+  if(b.includes('pers')||b.includes('persian')||b.includes('langha'))return'😻';
+  if(b.includes('siamese')||b.includes('siamees'))return'🐱';
+  if(b.includes('maine')||b.includes('noors')||b.includes('ragdoll'))return'🦁';
+  return'🐱';
+}
+
+function mkIcon(cat, clusterCount=0){
   const isLost=cat.lost;
   const isOwn=me&&cat.owner===me.id;
   const bg=isLost?'#b03030':isOwn?'#c0623a':'#3a5e4e';
   const anim=isLost?'animation:lostpulse 1.6s infinite;':'';
-  return L.divIcon({html:`<div style="width:36px;height:36px;background:${bg};border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;${anim}">${cat.emoji||'🐱'}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
+  const emoji=cat.emoji&&cat.emoji!=='🐱'?cat.emoji:breedEmoji(cat.breed);
+  const cluster=clusterCount>1?`<div class="cluster-badge">${clusterCount}</div>`:'';
+  return L.divIcon({
+    html:`<div style="position:relative;width:36px;height:36px;">
+      <div style="width:36px;height:36px;background:${bg};border:3px solid white;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;font-size:17px;
+        box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;${anim}">${emoji}</div>
+      ${cluster}
+    </div>`,
+    className:'',iconSize:[36,36],iconAnchor:[18,18]
+  });
 }
 
 function dotIcon(status){
@@ -505,7 +549,13 @@ function dotIcon(status){
 
 function renderCatMkrs(){
   Object.values(catMkrs).forEach(m=>map.removeLayer(m));catMkrs={};
-  cats.forEach(cat=>{const m=L.marker([cat.lat,cat.lng],{icon:mkIcon(cat)}).addTo(map).on('click',()=>showDetail(cat.id));catMkrs[cat.id]=m;});
+  // Count cats at same location (within ~30m)
+  cats.forEach(cat=>{
+    const nearby=cats.filter(c=>c.id!==cat.id&&gd(cat.lat,cat.lng,c.lat,c.lng)<0.0003).length;
+    const m=L.marker([cat.lat,cat.lng],{icon:mkIcon(cat,nearby+1>1?nearby+1:0)})
+      .addTo(map).on('click',()=>showDetail(cat.id));
+    catMkrs[cat.id]=m;
+  });
 }
 
 function renderSightMkrs(){
@@ -642,10 +692,27 @@ function showDetail(catId){
   const isOwn=me&&cat.owner===me.id;
   document.getElementById('detail-name').innerHTML=`${cat.name}${cat.lost?`<span class="tag tag-lost" style="font-size:0.62rem">🚨 Vermist</span>`:''}`;
   const ph=document.getElementById('detail-photo');
-  ph.innerHTML=cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱');
+  ph.innerHTML=cat.photo?`<img src="${cat.photo}">`:(breedEmoji(cat.breed));
   const owner=users.find(u=>u.id===cat.owner);
-  document.getElementById('detail-meta').textContent=`${cat.breed} · ${cat.address} · ${owner?owner.name:'Onbekend'}`;
-  document.getElementById('detail-bio').textContent=cat.bio;
+  // Only show address and owner to the owner themselves
+  const metaParts=[cat.breed];
+  if(isOwn){metaParts.push(cat.address);metaParts.push(`Eigenaar: ${owner?owner.name:'Onbekend'}`);}
+  document.getElementById('detail-meta').textContent=metaParts.join(' · ');
+  // Main photo + gallery
+  const photoHtml=cat.photo
+    ?`<img src="${cat.photo}" class="cat-main-photo" data-fs="${cat.photo}" onclick="openPhotoFullscreen(this.dataset.fs)">`
+    :`<div class="cat-main-photo-placeholder">${breedEmoji(cat.breed)}</div>`;
+  const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
+  const galleryHtml=extraHtml?`<div class="photo-gallery">${extraHtml}</div>`:'';
+  document.getElementById('detail-photo').innerHTML='';
+  document.getElementById('detail-photo').style.display='none';
+  // Insert photos before bio
+  const bioEl=document.getElementById('detail-bio');
+  bioEl.innerHTML='';
+  const photoWrap=document.createElement('div');
+  photoWrap.innerHTML=photoHtml+galleryHtml;
+  bioEl.parentElement.insertBefore(photoWrap,bioEl);
+  bioEl.textContent=cat.bio;
   const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
   let btns=`<button class="btn btn-primary btn-sm" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${cat.id}'">🐾 Gespot!</button>`;
   btns+=`<span style="font-size:0.74rem;color:var(--mid);align-self:center">${n} bevestigd${n!==1?'e':''} spot${n!==1?'s':''}</span>`;
@@ -912,6 +979,7 @@ function openEditCat(catId){
   if(cat.photo){p.src=cat.photo;p.style.display='block';}
   const el=document.getElementById('addr-st');
   el.textContent=cat.addrOk?'✓ Eerder geverifieerd':'';el.className='addr-status'+(cat.addrOk?' addr-ok':'');
+  loadExtraPhotosForEdit(cat);
   openModal('add-cat-modal');
 }
 
@@ -921,31 +989,34 @@ async function saveCat(){
   const addr=document.getElementById('f-addr').value.trim();
   const breed=document.getElementById('f-breed').value.trim();
   const bio=document.getElementById('f-bio').value.trim();
-  const email=document.getElementById('f-email').value.trim();
+  const email=me.email||''; // use account email
   const ph=document.getElementById('f-prev');
+  const extraPhotos=currentExtraPhotos.slice(0,3);
   if(!name||!addr){toast('Vul naam en adres in.',true);return;}
   const addrInput=document.getElementById('f-addr');
   const addrOk=document.getElementById('addr-st').classList.contains('addr-ok')||addrInput.dataset.manualOk==='1';
   if(editCatId){
     const cat=cats.find(c=>c.id===editCatId);
-    Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:email||cat.email||'',
-      photo:ph.style.display!=='none'?ph.src:cat.photo,addrOk,
-      lat:verLat||cat.lat,lng:verLng||cat.lng});
+    Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:me.email||'',
+      photo:ph.style.display!=='none'?ph.src:cat.photo,addrOk,extraPhotos,
+      lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:breedEmoji(breed||cat.breed)});
     await sb.from('cats').update({
       name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
-      photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost
+      photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
+      emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos)
     }).eq('id',cat.id);
     toast(`${name} bijgewerkt!`);
   }else{
     const lat=verLat||(OUD[0]+(Math.random()-.5)*.01);
     const lng=verLng||(OUD[1]+(Math.random()-.5)*.01);
     const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email,
-      owner:me.id,photo:ph.style.display!=='none'?ph.src:null,emoji:'🐱',lat,lng,lost:false,addrOk};
+      owner:me.id,photo:ph.style.display!=='none'?ph.src:null,
+      emoji:breedEmoji(breed),extraPhotos,lat,lng,lost:false,addrOk};
     cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
     await sb.from('cats').insert({
       id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
-      lost:cat.lost,addr_ok:cat.addrOk
+      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos)
     });
     toast(`${name} toegevoegd! 🐱`);
   }
@@ -986,8 +1057,9 @@ async function doRegister(){
   if(!name){toast('Vul een naam in.',true);return;}
   if(regPin.length<4){toast('Kies een 4-cijferige PIN.',true);return;}
   if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){toast('Naam al in gebruik.',true);return;}
-  const u={id:'u'+Date.now(),name,pin:regPin,cats:[]};users.push(u);
-  await sb.from('users').insert({id:u.id,name:u.name,pin:u.pin});
+  const email=document.getElementById('reg-email')?.value.trim()||'';
+  const u={id:'u'+Date.now(),name,pin:regPin,email,cats:[]};users.push(u);
+  await sb.from('users').insert({id:u.id,name:u.name,pin:u.pin,email:u.email});
   setMe(u);closeModal('login-modal');
   document.getElementById('reg-name').value='';regPin='';updDots('rpd','');
   document.getElementById('reg-pin-disp').textContent='····';
@@ -1026,7 +1098,7 @@ function switchTab(tab){
 }
 function prevImg(input,prevId){const p=document.getElementById(prevId);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
-function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-email'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();}
+function clearCatForm(){['f-name','f-addr','f-breed','f-bio'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];renderExtraPhotosPrev();}
 function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;}
 function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
 
@@ -1043,10 +1115,12 @@ async function loadFromSupabase(){
       sb.from('cats').select('*'),
       sb.from('sightings').select('*')
     ]);
-    if(u.data?.length)users=u.data.map(r=>({id:r.id,name:r.name,pin:r.pin,cats:[]}));
+    if(u.data?.length)users=u.data.map(r=>({id:r.id,name:r.name,pin:r.pin,email:r.email||'',cats:[]}));
     if(c.data?.length)cats=c.data.map(r=>({
       id:r.id,name:r.name,address:r.address,breed:r.breed,bio:r.bio,
-      email:r.email||'',owner:r.owner_id,photo:r.photo,emoji:r.emoji||'🐱',
+      email:r.email||'',owner:r.owner_id,photo:r.photo,
+      emoji:r.emoji||breedEmoji(r.breed),
+      extraPhotos:r.extra_photos?JSON.parse(r.extra_photos):[],
       lat:r.lat,lng:r.lng,lost:r.lost,addrOk:r.addr_ok
     }));
     if(s.data?.length)sightings=s.data.map(r=>({
@@ -1129,7 +1203,7 @@ function showNearbyCats(lat,lng){
     return{cat,homeDist,distKm,inTerritory,closestPt:closestPt.d};
   }).sort((a,b)=>a.homeDist-b.homeDist).slice(0,5);
 
-  const nearby=scored.filter(s=>s.homeDist<0.02); // ~2km radius
+  const nearby=scored.filter(s=>s.homeDist<0.0045); // ~500m radius
   if(!nearby.length){
     el.innerHTML='<div style="font-size:0.82rem;color:var(--mid);padding:8px 0;">Geen katten gevonden binnen 2km. Vergroot de zoekradius of check de kaart.</div>';
     return;
@@ -1262,6 +1336,52 @@ async function confirmDeleteSighting(id){
       renderAll();if(selectedCat)renderTerr(selectedCat);
       toast('Spotting verwijderd.');
     });
+}
+
+// EXTRA PHOTOS
+let currentExtraPhotos=[];
+function addExtraPhotos(input){
+  const files=Array.from(input.files);
+  const remaining=3-currentExtraPhotos.length;
+  if(remaining<=0){toast('Maximum 3 extra fotos bereikt.',true);return;}
+  let loaded=0;
+  files.slice(0,remaining).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      currentExtraPhotos.push(e.target.result);
+      loaded++;
+      if(loaded===Math.min(files.length,remaining))renderExtraPhotosPrev();
+    };
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
+function renderExtraPhotosPrev(){
+  const el=document.getElementById('extra-photos-preview');
+  if(!el)return;
+  let html=currentExtraPhotos.map((src,i)=>
+    `<div style="position:relative;">
+      <img src="${src}" style="width:100%;height:70px;object-fit:cover;border-radius:7px;">
+      <button onclick="removeExtraPhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>`).join('');
+  if(currentExtraPhotos.length<3)html+=`<div class="photo-add-btn" onclick="document.getElementById('f-extra-photos').click()">+</div>`;
+  el.innerHTML=html;
+}
+function removeExtraPhoto(i){currentExtraPhotos.splice(i,1);renderExtraPhotosPrev();}
+
+// Pre-fill extra photos when editing
+function loadExtraPhotosForEdit(cat){
+  currentExtraPhotos=(cat.extraPhotos||[]).slice(0,3);
+  renderExtraPhotosPrev();
+}
+
+// Fullscreen photo viewer
+function openPhotoFullscreen(src){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  overlay.innerHTML=`<img src="${src}" style="max-width:95vw;max-height:95vh;object-fit:contain;border-radius:8px;">`;
+  overlay.onclick=()=>document.body.removeChild(overlay);
+  document.body.appendChild(overlay);
 }
 </script>
 </body>
