@@ -218,7 +218,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <span id="header-username">Log in</span>
     </div>
     <button class="btn btn-secondary" onclick="openModal('add-cat-modal')">+ Mijn Kat</button>
-    <button class="btn btn-secondary" onclick="openNearby()" title="Welke kat ben ik bij?" style="padding:7px 10px;">📡</button>
+
     <button class="btn btn-primary" onclick="openModal('spot-modal')">🐾 Gespot!</button>
   </div>
 </header>
@@ -539,8 +539,8 @@ function onMapClick(e){
     if(document.getElementById('sp-cat').value==='unknown'){onSpotCatChange();}
     toast('Locatie ingesteld! ✓');
   } else {
-    // Normal click — just show nearby cats in sidebar, no popup
-    switchTab('cats');
+    // Normal click — silently update location, cats tab already shows nearby
+    // Don't force tab switch so user can stay on whichever tab they're on
   }
 }
 
@@ -641,8 +641,8 @@ function renderCatsList(){
   let html='';
   if(!userLat){
     html+=`<div class="info-box" style="margin-bottom:8px;">
-      📍 Gebruik GPS of klik op de kaart om katten in jouw buurt te zien.
-      <button class="btn btn-forest btn-sm" style="margin-top:7px;width:100%" onclick="openNearby()">📡 Mijn locatie gebruiken</button>
+      📍 Klik op de kaart of gebruik je locatie om katten in de buurt te zien.
+      <button class="btn btn-forest btn-sm" style="margin-top:7px;width:100%" onclick="useGPS()">📍 GPS gebruiken</button>
     </div>`;
   }
   if(visibleCats.length){
@@ -1460,9 +1460,10 @@ function expandSidebar(){
   if(sb.classList.contains('collapsed'))sb.classList.remove('collapsed');
 }
 // Auto-collapse sidebar on mobile after tab switch
-const origSwitchTab=switchTab;
+// Mobile: expand sidebar when switching tabs
+const _origSwitchTab=switchTab;
 function switchTab(tab){
-  origSwitchTab(tab);
+  _origSwitchTab(tab);
   if(window.innerWidth<=700)expandSidebar();
 }
 // Start collapsed on mobile
