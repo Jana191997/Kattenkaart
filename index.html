@@ -104,8 +104,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .detail-close{position:absolute;top:12px;right:13px;background:var(--border);border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;}
 .detail-name{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 .detail-row{display:flex;gap:14px;margin-top:9px;}
-.detail-photo{width:72px;height:72px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,#c8b8a2,#a89880);display:flex;align-items:center;justify-content:center;font-size:1.9rem;overflow:hidden;}
-.detail-photo img{width:100%;height:100%;object-fit:cover;}
+.detail-photo{width:90px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;align-items:flex-start;}
 .detail-bio{font-size:0.8rem;line-height:1.45;margin-top:3px;}
 .detail-actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;align-items:center;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.52);z-index:2000;align-items:center;justify-content:center;padding:14px;}
@@ -200,10 +199,11 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .photo-add-btn{width:100%;height:70px;border:2px dashed var(--border);border-radius:7px;background:var(--cream);
   display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.4rem;transition:all 0.2s;color:var(--mid);}
 .photo-add-btn:hover{border-color:var(--terracotta);color:var(--terracotta);}
-.cat-main-photo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;margin-bottom:8px;cursor:pointer;display:block;}
-.cat-main-photo-placeholder{width:100%;aspect-ratio:1/1;background:linear-gradient(135deg,#c8b8a2,#a89880);
-  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:4rem;margin-bottom:8px;}
-.photo-gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:pointer;}
+.cat-main-photo{width:90px;height:90px;object-fit:cover;border-radius:10px;cursor:pointer;display:block;flex-shrink:0;}
+.cat-main-photo-placeholder{width:90px;height:90px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;}
+.photo-gallery{display:flex;gap:5px;margin-top:5px;}
+.photo-gallery img,.gallery-thumb{width:52px;height:52px;object-fit:cover;border-radius:7px;cursor:pointer;flex-shrink:0;}
 .cluster-badge{position:absolute;top:-4px;right:-4px;background:var(--terracotta);color:white;
   border-radius:50%;width:18px;height:18px;font-size:0.65rem;font-weight:700;
   display:flex;align-items:center;justify-content:center;border:2px solid white;}
@@ -736,19 +736,17 @@ function showDetail(catId){
   const photoHtml=cat.photo
     ?`<img src="${cat.photo}" class="cat-main-photo" data-fs="${cat.photo}" onclick="openPhotoFullscreen(this.dataset.fs)">`
     :`<div class="cat-main-photo-placeholder">${breedEmoji(cat.breed)}</div>`;
-  const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:pointer" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
+  const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" class="gallery-thumb" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
   const galleryHtml=extraHtml?`<div class="photo-gallery">${extraHtml}</div>`:'';
-  document.getElementById('detail-photo').innerHTML='';
-  document.getElementById('detail-photo').style.display='none';
-  // Remove any previously inserted photo wraps to prevent duplication
+  // Remove old photo wraps to prevent duplication
+  document.querySelectorAll('.detail-photo-wrap').forEach(el=>el.remove());
+  // Use the existing detail-photo element as photo container
+  const ph2=document.getElementById('detail-photo');
+  ph2.style.display='flex';
+  ph2.style.flexDirection='column';
+  ph2.style.gap='5px';
+  ph2.innerHTML=photoHtml+(galleryHtml||'');
   const bioEl=document.getElementById('detail-bio');
-  const detailRow=document.getElementById('detail-bio').parentElement;
-  detailRow.querySelectorAll('.detail-photo-wrap').forEach(el=>el.remove());
-  bioEl.innerHTML='';
-  const photoWrap=document.createElement('div');
-  photoWrap.className='detail-photo-wrap';
-  photoWrap.innerHTML=photoHtml+galleryHtml;
-  bioEl.parentElement.insertBefore(photoWrap,bioEl);
   bioEl.textContent=cat.bio;
   const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
   let btns=`<button class="btn btn-primary btn-sm" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${cat.id}'">🐾 Gespot!</button>`;
@@ -1011,7 +1009,6 @@ function openEditCat(catId){
   document.getElementById('f-addr').value=cat.address;
   document.getElementById('f-breed').value=cat.breed;
   document.getElementById('f-bio').value=cat.bio;
-  document.getElementById('f-email').value=cat.email||'';
   const p=document.getElementById('f-prev');
   if(cat.photo){p.src=cat.photo;p.style.display='block';}
   const el=document.getElementById('addr-st');
