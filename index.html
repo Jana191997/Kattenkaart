@@ -274,7 +274,10 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 
   <div class="map-container" style="flex:1;position:relative;">
     <div class="map-hint" id="map-hint">Klik op de kaart om een locatie te kiezen</div>
-    <div class="lost-banner" id="lost-banner" onclick="switchTab('alerts')">🚨 Vermiste katten in de buurt — tik voor meer info</div>
+    <div class="lost-banner" id="lost-banner">
+      <span onclick="switchTab('alerts')" style="cursor:pointer;">🚨 Vermiste katten in de buurt — tik voor meer info</span>
+      <span onclick="dismissLostBanner(event)" style="margin-left:10px;opacity:0.8;font-size:1rem;cursor:pointer;vertical-align:middle;">✕</span>
+    </div>
     <div class="nearby-panel" id="nearby-panel">
       <button class="detail-close" onclick="closeNearby()" style="position:absolute;top:10px;right:10px;">✕</button>
       <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:10px;">📡 Katten in jouw buurt</div>
@@ -728,6 +731,7 @@ function onMapClick(e){
   placeGPSDot(lat,lng);
   renderCatsList();
 
+  checkLostBannerVisibility(lat,lng);
   if(pickingLocForSpot){
     // User came from spot modal — fill in location and go back
     pickingLocForSpot=false; pickingLoc=false;
@@ -808,13 +812,17 @@ function renderTerr(catId){
   const col=cat.lost?'#b03030':isOwn?'#c0623a':'#3a5e4e';
   const pts=[{lat:cat.lat,lng:cat.lng},...conf.map(s=>({lat:s.lat,lng:s.lng}))];
   const opt={color:col,fillColor:col,fillOpacity:0.1,weight:2,dashArray:'6 4'};
-  if(conf.length===0)terrLayers.c=L.circle([cat.lat,cat.lng],{radius:120,...opt}).addTo(map);
-  else terrLayers.p=L.polygon(pts.map(p=>[p.lat,p.lng]),opt).addTo(map);
+  const baseRadius=cat.lost?1000:120; // 1km for lost cats, 120m default
+  if(conf.length===0)terrLayers.c=L.circle([cat.lat,cat.lng],{radius:baseRadius,...opt}).addTo(map);
+  else{
+    terrLayers.p=L.polygon(pts.map(p=>[p.lat,p.lng]),opt).addTo(map);
+    if(cat.lost)terrLayers.c=L.circle([cat.lat,cat.lng],{radius:1000,color:col,fillColor:col,fillOpacity:0.05,weight:1,dashArray:'4 6'}).addTo(map);
+  }
 }
 
 function renderAll(){
   renderCatMkrs();renderSightMkrs();renderCatsList();renderSightList();renderPendingList();renderAlerts();updateCatSel();updateBadges();
-  document.getElementById('lost-banner').classList.toggle('visible',cats.some(c=>c.lost));
+  updateLostBanner();
 }
 
 // SIDEBAR
@@ -1623,9 +1631,9 @@ function placeGPSDot(lat,lng){
     html:'<div class="gps-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]
   })}).addTo(map);
   map.setView([lat,lng],16);
-  // Update current location and refresh cats list
   currentLat=lat; currentLng=lng;
   renderCatsList();
+  checkLostBannerVisibility(lat,lng);
 }
 
 function showNearbyCats(lat,lng){
@@ -1969,6 +1977,31 @@ async function deleteAccount(){
       renderAll();
       toast('Account verwijderd. Tot ziens! 👋');
     });
+}
+
+// LOST BANNER DISMISS
+let lostBannerDismissed=false;
+function dismissLostBanner(e){
+  e.stopPropagation();
+  lostBannerDismissed=true;
+  document.getElementById('lost-banner').classList.remove('visible');
+}
+function updateLostBanner(){
+  if(lostBannerDismissed)return;
+  const hasLost=cats.some(c=>c.lost);
+  document.getElementById('lost-banner').classList.toggle('visible',hasLost);
+}
+// Check if user location is outside all lost cat territories
+function checkLostBannerVisibility(lat,lng){
+  if(lostBannerDismissed)return;
+  const lostCats=cats.filter(c=>c.lost);
+  if(!lostCats.length){document.getElementById('lost-banner').classList.remove('visible');return;}
+  // Show banner if within 1km of any lost cat, hide if outside all territories
+  const nearLost=lostCats.some(c=>gd(lat,lng,c.lat,c.lng)<0.009); // ~1km
+  if(!nearLost){
+    lostBannerDismissed=true;
+    document.getElementById('lost-banner').classList.remove('visible');
+  }
 }
 
 // MOBILE SIDEBAR TOGGLE
