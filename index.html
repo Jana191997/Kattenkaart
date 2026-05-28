@@ -111,11 +111,10 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--forest);color:white;padding:7px 15px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;}
 .map-hint.visible{opacity:1;}
-.lost-banner{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--lost);color:white;
-  padding:8px 18px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:1200;display:none;
-  white-space:nowrap;cursor:pointer;box-shadow:0 2px 12px rgba(176,48,48,0.4);
-  animation:lostpulse 2s infinite;}
-.lost-banner.visible{display:block;}
+.lost-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--lost);color:white;
+  padding:8px 18px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;display:none;
+  white-space:nowrap;box-shadow:0 2px 12px rgba(176,48,48,0.3);}
+.lost-banner.visible{display:flex;align-items:center;gap:8px;}
 @media(max-width:700px){
   .lost-banner{top:auto;bottom:60px;left:50%;transform:translateX(-50%);
     white-space:normal;text-align:center;max-width:calc(100vw - 32px);
