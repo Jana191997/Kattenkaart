@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KattenKaart Oudenaarde</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3a5e4e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KattenKaart">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://isckwlqrdczvkasyqtqr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY2t3bHFyZGN6dmthc3lxdHFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NjAyOTAsImV4cCI6MjA5NTUzNjI5MH0.h5edooaYN2yVdZmzBdqBFeIquQiiMbHP8BrIs4EU7A8';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f5f0e8;--warm-white:#faf8f4;--terracotta:#c0623a;--terracotta-light:#d97d56;--forest:#3a5e4e;--forest-light:#4d7a65;--charcoal:#2c2c2c;--mid:#6b6560;--border:#ddd6cc;--shadow:0 4px 20px rgba(0,0,0,0.1);--shadow-lg:0 8px 40px rgba(0,0,0,0.15);--lost:#b03030;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh;}
+header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,0.2);}
+.logo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;}
+.logo span{color:#d97d56;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.user-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.13);border-radius:20px;padding:5px 11px 5px 7px;cursor:pointer;font-size:0.8rem;font-weight:700;}
+.user-avatar{width:24px;height:24px;background:var(--terracotta);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;}
+.btn{padding:7px 14px;border:none;border-radius:6px;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;transition:all 0.2s;}
+.btn-primary{background:var(--terracotta);color:white;}.btn-primary:hover{background:var(--terracotta-light);transform:translateY(-1px);}
+.btn-secondary{background:transparent;color:var(--cream);border:1.5px solid rgba(245,240,232,0.5);}.btn-secondary:hover{background:rgba(255,255,255,0.1);}
+.btn-forest{background:var(--forest);color:white;}.btn-forest:hover{background:var(--forest-light);}
+.btn-lost{background:var(--lost);color:white;}.btn-lost:hover{background:#c04040;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--charcoal);}.btn-outline:hover{border-color:var(--terracotta);color:var(--terracotta);}
+.btn-sm{padding:5px 10px;font-size:0.73rem;}.btn-full{width:100%;margin-top:8px;padding:10px;font-size:0.86rem;}
+.app{display:grid;grid-template-columns:355px 1fr;height:calc(100vh - 58px);}
+.sidebar{background:var(--warm-white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border);}
+.tab-btn{flex:1;padding:11px 3px;background:none;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--mid);border-bottom:3px solid transparent;transition:all 0.2s;}
+.tab-btn.active{color:var(--terracotta);border-bottom-color:var(--terracotta);background:var(--cream);}
+.tab-content{display:none;flex:1;overflow-y:auto;padding:13px;}
+.tab-content.active{display:flex;flex-direction:column;gap:9px;}
+.cat-card{background:var(--cream);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
+.cat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.cat-card.selected{border-color:var(--terracotta);box-shadow:0 0 0 2px rgba(192,98,58,0.2);}
+.cat-card.lost-card{border-color:var(--lost);}
+.cat-card-img{width:100%;height:96px;background:linear-gradient(135deg,#c8b8a2,#a89880);display:flex;align-items:center;justify-content:center;font-size:2.6rem;overflow:hidden;}
+.cat-card-img img{width:100%;height:100%;object-fit:cover;}
+.cat-card-body{padding:9px 11px;}
+.cat-name{font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:700;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.cat-meta{font-size:0.73rem;color:var(--mid);margin-top:2px;}
+.cat-bio{font-size:0.78rem;margin-top:4px;line-height:1.45;}
+.tag{display:inline-block;font-size:0.66rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:2px 7px;border-radius:10px;margin-top:5px;margin-right:3px;}
+.tag-own{background:var(--terracotta);color:white;position:absolute;top:7px;right:7px;}
+.tag-territory{color:var(--forest);background:rgba(58,94,78,0.1);}
+.tag-lost{background:var(--lost);color:white;}
+.tag-verified{color:#1a6636;background:rgba(26,102,54,0.1);}
+.tag-unverified{color:#856404;background:#fef3cd;}
+.sighting-card{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:10px 11px;font-size:0.8rem;}
+.sighting-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.sighting-cat{font-weight:700;color:var(--terracotta);font-size:0.84rem;}
+.sighting-time{font-size:0.69rem;color:var(--mid);}
+.status-badge{display:inline-block;font-size:0.66rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:2px 7px;border-radius:10px;margin-top:5px;}
+.s-pending{background:#fef3cd;color:#856404;}.s-confirmed{background:#d1f0e0;color:#1a6636;}.s-denied{background:#fde8e8;color:#9b2020;}
+.sighting-actions{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;}
+.sighting-photo{width:100%;border-radius:6px;margin-top:7px;max-height:100px;object-fit:cover;}
+.notif-item{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:10px 11px;font-size:0.79rem;}
+.notif-item.unread{border-left:3px solid var(--terracotta);}
+.notif-title{font-weight:700;margin-bottom:2px;}
+.map-container{position:relative;display:flex;flex-direction:column;}
+#map{width:100%;height:100%;}
+.map-hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--forest);color:white;padding:7px 15px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;}
+.map-hint.visible{opacity:1;}
+.lost-banner{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--lost);color:white;padding:7px 16px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;display:none;white-space:nowrap;}
+.lost-banner.visible{display:block;}
+.cat-detail{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--warm-white);border-top:1px solid var(--border);border-radius:14px 14px 0 0;padding:16px 18px;z-index:500;box-shadow:0 -4px 20px rgba(0,0,0,0.1);max-height:46%;overflow-y:auto;}
+.cat-detail.open{display:block;}
+.detail-close{position:absolute;top:12px;right:13px;background:var(--border);border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;}
+.detail-name{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.detail-row{display:flex;gap:14px;margin-top:9px;}
+.detail-photo{width:72px;height:72px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,#c8b8a2,#a89880);display:flex;align-items:center;justify-content:center;font-size:1.9rem;overflow:hidden;}
+.detail-photo img{width:100%;height:100%;object-fit:cover;}
+.detail-bio{font-size:0.8rem;line-height:1.45;margin-top:3px;}
+.detail-actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;align-items:center;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.52);z-index:2000;align-items:center;justify-content:center;padding:14px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--warm-white);border-radius:14px;width:100%;max-width:478px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-header{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--warm-white);z-index:1;}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.12rem;font-weight:700;}
+.modal-close{background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--mid);padding:3px;}
+.modal-body{padding:16px 20px 20px;}
+.form-group{margin-bottom:12px;}
+.form-label{display:block;font-size:0.73rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--mid);margin-bottom:4px;}
+.form-input,.form-textarea,.form-select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:'Lato',sans-serif;font-size:0.84rem;background:var(--cream);color:var(--charcoal);transition:border-color 0.2s;outline:none;}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--terracotta);}
+.form-textarea{resize:vertical;min-height:68px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.addr-wrap{position:relative;}
+.addr-status{font-size:0.73rem;margin-top:3px;min-height:17px;}
+.addr-ok{color:#1a6636;}.addr-err{color:#9b2020;}.addr-checking{color:var(--mid);}
+.addr-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--warm-white);border:1.5px solid var(--terracotta);border-top:none;border-radius:0 0 8px 8px;z-index:3000;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.12);display:none;}
+.addr-dropdown.open{display:block;}
+.addr-option{padding:9px 12px;cursor:pointer;font-size:0.83rem;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;transition:background 0.15s;}
+.addr-option:last-child{border-bottom:none;}
+.addr-option:hover,.addr-option.focused{background:rgba(192,98,58,0.08);}
+.addr-option-main{font-weight:700;color:var(--charcoal);}
+.addr-option-sub{font-size:0.73rem;color:var(--mid);}
+.addr-option-badge{font-size:0.65rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:1px;}
+.addr-badge-local{background:rgba(26,102,54,0.12);color:#1a6636;}
+.addr-badge-other{background:#fef3cd;color:#856404;}
+.addr-no-results{padding:10px 12px;font-size:0.8rem;color:var(--mid);font-style:italic;}
+.file-upload{border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--cream);}
+.file-upload:hover{border-color:var(--terracotta);}
+.file-upload input{display:none;}
+.file-upload-icon{font-size:1.6rem;margin-bottom:3px;}
+.file-upload-text{font-size:0.76rem;color:var(--mid);}
+.preview-img{width:100%;border-radius:8px;margin-top:7px;max-height:150px;object-fit:cover;}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0;}
+.info-box{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:0.78rem;color:var(--mid);}
+.itsme-box{background:#003f7f;color:white;border-radius:8px;padding:10px 13px;font-size:0.78rem;display:flex;align-items:center;gap:9px;margin-top:8px;}
+.itsme-badge{font-size:0.63rem;background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:10px;margin-top:3px;display:inline-block;}
+.pin-display{font-size:1.9rem;letter-spacing:0.4em;text-align:center;min-height:42px;margin:7px 0;}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:195px;margin:0 auto;}
+.pin-key{background:var(--cream);border:1.5px solid var(--border);border-radius:8px;padding:13px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all 0.15s;text-align:center;user-select:none;}
+.pin-key:hover{border-color:var(--terracotta);background:white;}
+.pin-key:active{transform:scale(0.93);}
+.pin-dots{display:flex;gap:7px;justify-content:center;margin:8px 0;}
+.pin-dot{width:11px;height:11px;border-radius:50%;background:var(--border);transition:background 0.2s;}
+.pin-dot.filled{background:var(--forest);}
+.matcher-card{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:11px;cursor:pointer;transition:all 0.2s;display:flex;gap:11px;align-items:flex-start;}
+.matcher-card:hover{border-color:var(--terracotta);transform:translateY(-1px);}
+.matcher-score{font-size:1.2rem;font-weight:700;color:var(--terracotta);min-width:42px;text-align:center;padding-top:2px;}
+.matcher-info{flex:1;}
+.matcher-name{font-family:'Playfair Display',serif;font-size:0.93rem;font-weight:700;}
+.match-bar{height:4px;border-radius:2px;background:var(--border);margin-top:5px;overflow:hidden;}
+.match-bar-fill{height:100%;background:var(--terracotta);border-radius:2px;}
+.section-title{font-family:'Playfair Display',serif;font-size:0.93rem;font-weight:700;}
+.section-sub{font-size:0.74rem;color:var(--mid);margin-top:2px;}
+.empty-state{text-align:center;padding:26px 10px;color:var(--mid);font-size:0.8rem;}
+.empty-state .big-icon{font-size:2rem;margin-bottom:5px;}
+.toast{position:fixed;top:70px;right:14px;background:var(--forest);color:white;padding:10px 16px;border-radius:8px;font-size:0.81rem;font-weight:700;z-index:3000;box-shadow:var(--shadow);transform:translateX(130%);transition:transform 0.3s ease;max-width:270px;}
+.toast.show{transform:translateX(0);}.toast.error{background:var(--lost);}
+@keyframes lostpulse{0%,100%{opacity:1}50%{opacity:0.55}}
+.lost-pulse{animation:lostpulse 1.6s infinite;}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:4000;align-items:center;justify-content:center;padding:20px;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:var(--warm-white);border-radius:14px;width:100%;max-width:360px;padding:24px;box-shadow:var(--shadow-lg);text-align:center;}
+.confirm-icon{font-size:2.2rem;margin-bottom:10px;}
+.confirm-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+.confirm-body{font-size:0.83rem;color:var(--mid);margin-bottom:20px;line-height:1.5;}
+.confirm-actions{display:flex;gap:10px;justify-content:center;}
+.user-menu{position:absolute;top:58px;right:0;background:var(--warm-white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:1500;min-width:180px;overflow:hidden;display:none;}
+.user-menu.open{display:block;}
+.user-menu-item{padding:11px 16px;font-size:0.83rem;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background 0.15s;}
+.user-menu-item:hover{background:var(--cream);}
+.user-menu-item.danger{color:var(--lost);}
+.header-right{position:relative;}
+.nearby-panel{display:none;position:absolute;top:12px;right:12px;background:var(--warm-white);
+  border:1px solid var(--border);border-radius:14px;padding:16px 18px;z-index:500;
+  box-shadow:var(--shadow-lg);width:300px;max-height:70%;overflow-y:auto;}
+.nearby-panel.open{display:block;}
+.nearby-cat-row{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.nearby-cat-row:last-child{border-bottom:none;}
+.nearby-cat-row:hover{background:rgba(192,98,58,0.04);border-radius:8px;}
+.nearby-thumb{width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden;}
+.nearby-thumb img{width:100%;height:100%;object-fit:cover;}
+.nearby-dist{font-size:0.7rem;color:var(--mid);margin-top:2px;}
+.gps-dot{width:14px;height:14px;background:#1a73e8;border:3px solid white;border-radius:50%;
+  box-shadow:0 0 0 4px rgba(26,115,232,0.25);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Katten<span>Kaart</span> Oudenaarde</div>
+  <div class="header-right">
+    <div class="user-pill" id="user-pill" onclick="toggleUserMenu(event)">
+      <div class="user-avatar" id="header-avatar">👤</div>
+      <span id="header-username">Log in</span>
+    </div>
+    <button class="btn btn-secondary" onclick="openModal('add-cat-modal')">+ Mijn Kat</button>
+    <button class="btn btn-secondary" onclick="openNearby()" title="Welke kat ben ik bij?" style="padding:7px 10px;">📡</button>
+    <button class="btn btn-primary" onclick="openModal('spot-modal')">🐾 Gespot!</button>
+  </div>
+</header>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" onclick="switchTab('cats')">🐱 Katten</button>
+      <button class="tab-btn" onclick="switchTab('sightings')">📍 Gespot</button>
+      <button class="tab-btn" onclick="switchTab('pending')">⏳ <span id="pending-badge"></span>Pending</button>
+      <button class="tab-btn" onclick="switchTab('alerts')">🔔 <span id="alert-badge"></span>Alerts</button>
+    </div>
+    <div id="tab-cats" class="tab-content active">
+      <div><div class="section-title">Katten in de buurt</div><div class="section-sub">Klik een kat om het territorium te zien.</div></div>
+      <div id="cats-list"></div>
+    </div>
+    <div id="tab-sightings" class="tab-content">
+      <div><div class="section-title">Bevestigde spottings</div><div class="section-sub">Alle geverifieerde kattenlocaties.</div></div>
+      <div id="sightings-list"></div>
+    </div>
+    <div id="tab-pending" class="tab-content">
+      <div><div class="section-title">Wacht op bevestiging</div><div class="section-sub">Bevestig spottings van jouw katten.</div></div>
+      <div id="pending-list"></div>
+    </div>
+    <div id="tab-alerts" class="tab-content">
+      <div><div class="section-title">Meldingen</div><div class="section-sub">Spottings, vermiste katten en nieuws.</div></div>
+      <div id="alerts-list"></div>
+    </div>
+  </div>
+
+  <div class="map-container" style="flex:1;position:relative;">
+    <div class="map-hint" id="map-hint">Klik op de kaart om een locatie te kiezen</div>
+    <div class="lost-banner" id="lost-banner">🚨 Vermiste katten in de buurt — zie rode markers</div>
+    <div class="nearby-panel" id="nearby-panel">
+      <button class="detail-close" onclick="closeNearby()" style="position:absolute;top:10px;right:10px;">✕</button>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:10px;">📡 Katten in jouw buurt</div>
+      <div id="nearby-content"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-forest btn-sm" onclick="useGPS()">📍 Gebruik GPS</button>
+        <button class="btn btn-outline btn-sm" onclick="startPickLoc();closeNearby()">🗺️ Kies op kaart</button>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div class="cat-detail" id="cat-detail">
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+      <div class="detail-name" id="detail-name"></div>
+      <div class="detail-row">
+        <div class="detail-photo" id="detail-photo"></div>
+        <div style="flex:1"><div style="font-size:0.76rem;color:var(--mid)" id="detail-meta"></div><div class="detail-bio" id="detail-bio"></div></div>
+      </div>
+      <div class="detail-actions" id="detail-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal" style="max-width:370px;">
+    <div class="modal-header">
+      <div class="modal-title" id="login-title">Inloggen</div>
+      <button class="modal-close" onclick="closeModal('login-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="login-area">
+        <div class="form-group">
+          <label class="form-label">Gebruikersnaam</label>
+          <input class="form-input" id="login-name" placeholder="Jouw naam" oninput="resetLoginPin()">
+        </div>
+        <label class="form-label">PIN (4 cijfers)</label>
+        <div class="pin-display" id="pin-disp">····</div>
+        <div class="pin-dots" id="pin-dots">
+          <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+        </div>
+        <div class="pin-grid" id="pin-grid-login"></div>
+        <hr class="divider">
+        <div style="text-align:center;font-size:0.77rem;color:var(--mid);margin-bottom:9px;">Nog geen account?</div>
+        <button class="btn btn-forest btn-full" style="margin-top:0" onclick="toRegister()">Nieuw account aanmaken</button>
+        <div class="itsme-box">
+          <span style="font-size:1.3rem">🇧🇪</span>
+          <div><strong>itsme® integratie</strong><br>In de toekomst: log in met itsme voor officiële adresverificatie via eID.<br><span class="itsme-badge">Vereist registratie als officiële app</span></div>
+        </div>
+      </div>
+      <div id="register-area" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Naam</label>
+          <input class="form-input" id="reg-name" placeholder="Jouw naam of bijnaam">
+        </div>
+        <label class="form-label">Kies een PIN (4 cijfers)</label>
+        <div class="pin-display" id="reg-pin-disp">····</div>
+        <div class="pin-dots" id="reg-pin-dots">
+          <div class="pin-dot" id="rpd0"></div><div class="pin-dot" id="rpd1"></div><div class="pin-dot" id="rpd2"></div><div class="pin-dot" id="rpd3"></div>
+        </div>
+        <div class="pin-grid" id="pin-grid-reg"></div>
+        <button class="btn btn-primary btn-full" onclick="doRegister()">Account aanmaken</button>
+        <button class="btn btn-outline btn-full" onclick="toLogin()" style="margin-top:5px">← Terug</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT CAT MODAL -->
+<div class="modal-overlay" id="add-cat-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cat-modal-title">Kat registreren</div>
+      <button class="modal-close" onclick="closeModal('add-cat-modal');editCatId=null">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="need-login-msg" class="info-box" style="display:none;margin-bottom:11px;">⚠️ Log eerst in om een kat te registreren.</div>
+      <div id="cat-fields">
+        <div class="form-group">
+          <label class="form-label">Naam</label>
+          <input class="form-input" id="f-name" placeholder="bv. Mijnheer Whiskers">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thuisadres <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(typ om te zoeken — suggesties verschijnen automatisch)</span></label>
+          <div class="addr-wrap" id="addr-wrap">
+            <input class="form-input" id="f-addr" placeholder="bv. Markt 3, Oudenaarde" autocomplete="off"
+              oninput="onAddrInput()" onkeydown="onAddrKey(event)" onfocus="if(addrResults.length)showDrop()" >
+            <div class="addr-dropdown" id="addr-dropdown"></div>
+          </div>
+          <div class="addr-status" id="addr-st"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ras / Omschrijving</label>
+          <input class="form-input" id="f-breed" placeholder="bv. Oranje tabby, pluizige staart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio</label>
+          <textarea class="form-textarea" id="f-bio" placeholder="Persoonlijkheid, gewoontes, favoriete plekken..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto</label>
+          <div class="file-upload" onclick="document.getElementById('f-photo').click()">
+            <input type="file" id="f-photo" accept="image/*" onchange="prevImg(this,'f-prev')">
+            <div class="file-upload-icon">📷</div>
+            <div class="file-upload-text">Klik om foto te uploaden</div>
+          </div>
+          <img id="f-prev" class="preview-img" style="display:none">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail voor meldingen <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(voor later — wanneer Supabase is gekoppeld)</span></label>
+          <input class="form-input" id="f-email" type="email" placeholder="jouw@email.be">
+          <div style="font-size:0.72rem;color:var(--mid);margin-top:3px;">📬 Je ontvangt een e-mail zodra jouw kat gespot wordt.</div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveCat()">Kat opslaan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPOT MODAL -->
+<div class="modal-overlay" id="spot-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Spotting melden</div>
+      <button class="modal-close" onclick="closeModal('spot-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Welke kat?</label>
+        <select class="form-select" id="sp-cat" onchange="onSpotCatChange()">
+          <option value="">— Selecteer een kat —</option>
+          <option value="unknown">Ik weet het niet — help me uitvinden!</option>
+        </select>
+      </div>
+      <div id="matcher-area" style="display:none;margin-bottom:11px;"></div>
+      <div class="form-group">
+        <label class="form-label">Locatie</label>
+        <input class="form-input" id="sp-loc" placeholder="bv. Broodstraat, bij apotheek" readonly>
+        <button class="btn btn-forest btn-sm" style="margin-top:5px;width:100%" onclick="startPickLoc()">📍 Kies op kaart</button>
+        <div id="sp-coords" style="font-size:0.71rem;color:var(--mid);margin-top:3px;"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Datum & tijd</label>
+          <input class="form-input" type="datetime-local" id="sp-time">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jouw naam</label>
+          <input class="form-input" id="sp-reporter" placeholder="Optioneel — of anoniem laten">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notities</label>
+        <textarea class="form-textarea" id="sp-notes" placeholder="Wat deed de kat?..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Foto (optioneel)</label>
+        <div class="file-upload" onclick="document.getElementById('sp-photo').click()">
+          <input type="file" id="sp-photo" accept="image/*" onchange="prevImg(this,'sp-prev')">
+          <div class="file-upload-icon">📸</div>
+          <div class="file-upload-text">Upload een foto</div>
+        </div>
+        <img id="sp-prev" class="preview-img" style="display:none">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitSighting()">Spotting versturen</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOST MODAL -->
+<div class="modal-overlay" id="lost-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title" id="lost-modal-title">🚨 Vermist melden</div>
+      <button class="modal-close" onclick="closeModal('lost-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box">Alle gebruikers ontvangen een melding en kunnen spottings melden voor jouw vermiste kat.</div>
+      <div class="form-group" style="margin-top:11px;">
+        <label class="form-label">Bericht (optioneel)</label>
+        <textarea class="form-textarea" id="lost-msg" placeholder="bv. Ontsnapt door raam, bang van vreemden..."></textarea>
+      </div>
+      <button class="btn btn-lost btn-full" onclick="doMarkLost()">🚨 Melding versturen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- USER DROPDOWN MENU -->
+<div class="user-menu" id="user-menu">
+  <div class="user-menu-item" onclick="openProfileModal()">✏️ Profiel bewerken</div>
+  <div class="user-menu-item danger" onclick="doLogout()">🚪 Uitloggen</div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal" style="max-width:390px;">
+    <div class="modal-header">
+      <div class="modal-title">Profiel bewerken</div>
+      <button class="modal-close" onclick="closeModal('profile-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Naam</label>
+        <input class="form-input" id="prof-name" placeholder="Jouw naam">
+      </div>
+      <hr class="divider">
+      <div style="font-size:0.78rem;color:var(--mid);margin-bottom:10px;">PIN wijzigen (laat leeg om hetzelfde te houden)</div>
+      <div class="form-group">
+        <label class="form-label">Huidige PIN</label>
+        <input class="form-input" id="prof-old-pin" type="password" maxlength="4" placeholder="····" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nieuwe PIN (4 cijfers)</label>
+        <input class="form-input" id="prof-new-pin" type="password" maxlength="4" placeholder="····" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bevestig nieuwe PIN</label>
+        <input class="form-input" id="prof-confirm-pin" type="password" maxlength="4" placeholder="····" inputmode="numeric">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-body" id="confirm-body"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" onclick="closeConfirm()">Annuleren</button>
+      <button class="btn btn-lost" id="confirm-ok-btn" onclick="confirmOk()">Verwijderen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const OUD=[50.8477,3.6069];
+let me=null, editCatId=null, pickingLoc=false, pickedLat=null, pickedLng=null;
+let verLat=null, verLng=null, addrTimer=null;
+let map, catMkrs={}, sightMkrs=[], terrLayers={};
+let selectedCat=null, lostCatId=null;
+let loginPin='', regPin='';
+
+// DATA — wordt geladen vanuit Supabase bij opstarten
+let users=[];
+let cats=[];
+let sightings=[];
+let notifs=[
+  {id:'n0',title:'Welkom bij KattenKaart!',body:'Registreer je katten en help ze thuis te vinden.',time:new Date().toISOString(),unread:true,type:'info'}
+];
+
+// MAP
+function initMap(){
+  map=L.map('map').setView(OUD,15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+  map.on('click',onMapClick);renderAll();
+}
+
+function onMapClick(e){
+  if(!pickingLoc)return;
+  pickedLat=e.latlng.lat;pickedLng=e.latlng.lng;
+  pickingLoc=false;
+  document.getElementById('map-hint').classList.remove('visible');
+  document.getElementById('sp-coords').textContent=`📍 ${pickedLat.toFixed(5)}, ${pickedLng.toFixed(5)}`;
+  document.getElementById('sp-loc').value=`Kaartlocatie (${pickedLat.toFixed(4)}, ${pickedLng.toFixed(4)})`;
+  openModal('spot-modal');
+  if(document.getElementById('sp-cat').value==='unknown'){onSpotCatChange();}
+  toast('Locatie ingesteld!');
+  // Also show nearby cats for anonymous users
+  if(!me){showNearbyFromMap(pickedLat,pickedLng);}
+}
+
+function mkIcon(cat){
+  const isLost=cat.lost;
+  const isOwn=me&&cat.owner===me.id;
+  const bg=isLost?'#b03030':isOwn?'#c0623a':'#3a5e4e';
+  const anim=isLost?'animation:lostpulse 1.6s infinite;':'';
+  return L.divIcon({html:`<div style="width:36px;height:36px;background:${bg};border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;${anim}">${cat.emoji||'🐱'}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
+}
+
+function dotIcon(status){
+  const c={confirmed:'#1a6636',pending:'#856404',denied:'#9b2020'}[status]||'#856404';
+  return L.divIcon({html:`<div style="width:14px;height:14px;background:${c};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>`,className:'',iconSize:[14,14],iconAnchor:[7,7]});
+}
+
+function renderCatMkrs(){
+  Object.values(catMkrs).forEach(m=>map.removeLayer(m));catMkrs={};
+  cats.forEach(cat=>{const m=L.marker([cat.lat,cat.lng],{icon:mkIcon(cat)}).addTo(map).on('click',()=>showDetail(cat.id));catMkrs[cat.id]=m;});
+}
+
+function renderSightMkrs(){
+  sightMkrs.forEach(m=>map.removeLayer(m));sightMkrs=[];
+  sightings.filter(s=>s.status==='confirmed').forEach(s=>{sightMkrs.push(L.marker([s.lat,s.lng],{icon:dotIcon(s.status)}).addTo(map));});
+}
+
+function renderTerr(catId){
+  Object.values(terrLayers).forEach(l=>map.removeLayer(l));terrLayers={};
+  const cat=cats.find(c=>c.id===catId);if(!cat)return;
+  const conf=sightings.filter(s=>s.catId===catId&&s.status==='confirmed');
+  const isOwn=me&&cat.owner===me.id;
+  const col=cat.lost?'#b03030':isOwn?'#c0623a':'#3a5e4e';
+  const pts=[{lat:cat.lat,lng:cat.lng},...conf.map(s=>({lat:s.lat,lng:s.lng}))];
+  const opt={color:col,fillColor:col,fillOpacity:0.1,weight:2,dashArray:'6 4'};
+  if(conf.length===0)terrLayers.c=L.circle([cat.lat,cat.lng],{radius:120,...opt}).addTo(map);
+  else terrLayers.p=L.polygon(pts.map(p=>[p.lat,p.lng]),opt).addTo(map);
+}
+
+function renderAll(){
+  renderCatMkrs();renderSightMkrs();renderCatsList();renderSightList();renderPendingList();renderAlerts();updateCatSel();updateBadges();
+  document.getElementById('lost-banner').classList.toggle('visible',cats.some(c=>c.lost));
+}
+
+// SIDEBAR
+function renderCatsList(){
+  const el=document.getElementById('cats-list');
+  if(!cats.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">🐾</div>Nog geen katten. Wees de eerste!</div>`;return;}
+  el.innerHTML=cats.map(cat=>{
+    const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
+    const isOwn=me&&cat.owner===me.id;
+    return`<div class="cat-card${selectedCat===cat.id?' selected':''}${cat.lost?' lost-card':''}" onclick="showDetail('${cat.id}')">
+      ${isOwn?'<span class="tag tag-own">Mijn kat</span>':''}
+      <div class="cat-card-img">${cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱')}</div>
+      <div class="cat-card-body">
+        <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost lost-pulse">🚨 Vermist</span>':''}</div>
+        <div class="cat-meta">${cat.breed}</div>
+        <div class="cat-bio">${cat.bio.substring(0,78)}${cat.bio.length>78?'…':''}</div>
+        <span class="tag tag-territory">📍 ${n} spot${n!==1?'s':''}</span>
+        <span class="tag ${cat.addrOk?'tag-verified':'tag-unverified'}">${cat.addrOk?'✓ Adres OK':'⏳ Niet geverif.'}</span>
+      </div></div>`;
+  }).join('');
+}
+
+function renderSightList(){
+  const el=document.getElementById('sightings-list');
+  const c=sightings.filter(s=>s.status==='confirmed');
+  if(!c.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">📍</div>Nog geen bevestigde spottings.</div>`;return;}
+  el.innerHTML=c.map(s=>{
+    const cat=cats.find(c=>c.id===s.catId);
+    return`<div class="sighting-card">
+      <div class="sighting-header"><div class="sighting-cat">${cat?cat.name:'?'}</div><div class="sighting-time">${fmt(s.time)}</div></div>
+      <div style="color:var(--mid)">📍 ${s.location}</div>
+      ${s.notes?`<div style="font-size:0.75rem;color:var(--mid);margin-top:2px;font-style:italic">"${s.notes}"</div>`:''}
+      ${s.photo?`<img src="${s.photo}" class="sighting-photo">`:''}
+      ${(me&&cat&&cat.owner===me.id)?`<div class="sighting-actions"><button class="btn btn-sm" style="background:#fef3cd;color:#856404" onclick="undoConfirmS('${s.id}')">↩ Ongedaan maken</button><button class="btn btn-sm" style="background:#fde8e8;color:#9b2020" onclick="confirmDeleteSighting('${s.id}')">🗑️ Verwijderen</button></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderPendingList(){
+  const el=document.getElementById('pending-list');
+  if(!me){el.innerHTML=`<div class="empty-state"><div class="big-icon">🔐</div>Log in om spottings van jouw katten te bevestigen.</div>`;return;}
+  const myCats=cats.filter(c=>c.owner===me.id).map(c=>c.id);
+  const pending=sightings.filter(s=>s.status==='pending');
+  const mine=pending.filter(s=>myCats.includes(s.catId));
+  const others=pending.filter(s=>!myCats.includes(s.catId));
+  let html='';
+  if(mine.length){
+    html+=`<div class="section-title" style="margin-bottom:7px">Jouw katten — bevestig!</div>`;
+    html+=mine.map(s=>{
+      const cat=cats.find(c=>c.id===s.catId);
+      return`<div class="sighting-card">
+        <div class="sighting-header"><div class="sighting-cat">${cat?cat.name:'?'}</div><div class="sighting-time">${fmt(s.time)}</div></div>
+        <div style="color:var(--mid)">📍 ${s.location}</div>
+        <div style="font-size:0.75rem;color:var(--mid);margin-top:2px">Gemeld door: ${s.reporter||'Anoniem'}</div>
+        ${s.notes?`<div style="font-style:italic;font-size:0.75rem;margin-top:2px">"${s.notes}"</div>`:''}
+        ${s.photo?`<img src="${s.photo}" class="sighting-photo">`:''}
+        <div class="sighting-actions">
+          <button class="btn btn-primary btn-sm" onclick="confirmS('${s.id}')">✓ Ja, ${cat?cat.name:'mijn kat'}!</button>
+          <button class="btn btn-sm" style="background:#fde8e8;color:#9b2020" onclick="denyS('${s.id}')">✕ Niet mijn kat</button>
+        </div></div>`;
+    }).join('');
+  }
+  if(others.length){
+    html+=`<div class="section-title" style="margin:${mine.length?'13px':0} 0 7px">Andere katten</div>`;
+    html+=others.map(s=>{
+      const cat=cats.find(c=>c.id===s.catId);
+      return`<div class="sighting-card" style="opacity:.65">
+        <div class="sighting-header"><div class="sighting-cat">${cat?cat.name:'?'}</div><div class="sighting-time">${fmt(s.time)}</div></div>
+        <div style="color:var(--mid)">📍 ${s.location}</div>
+        <span class="status-badge s-pending">⏳ Wacht op eigenaar</span></div>`;
+    }).join('');
+  }
+  if(!pending.length)html=`<div class="empty-state"><div class="big-icon">✨</div>Alles bijgewerkt!</div>`;
+  el.innerHTML=html;
+}
+
+function renderAlerts(){
+  const el=document.getElementById('alerts-list');
+  const lostAlerts=cats.filter(c=>c.lost).map(c=>({
+    id:'la-'+c.id,title:`🚨 ${c.name} is vermist!`,
+    body:`${c.name} (${c.breed}) vermist bij ${c.address}. Heb je hem/haar gezien?`,
+    time:new Date().toISOString(),unread:true,type:'lost',catId:c.id
+  }));
+  const all=[...lostAlerts,...notifs].slice(0,25);
+  if(!all.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">🔔</div>Geen meldingen.</div>`;return;}
+  el.innerHTML=all.map(n=>`<div class="notif-item${n.unread?' unread':''}">
+    <div class="notif-title">${n.title}</div>
+    <div style="font-size:0.77rem;margin-top:2px">${n.body}</div>
+    ${n.type==='lost'?`<button class="btn btn-primary btn-sm" style="margin-top:7px" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${n.catId}'">🐾 Ik heb deze kat gezien!</button>`:''}
+    <div style="font-size:0.68rem;color:var(--mid);margin-top:4px">${fmt(n.time)}</div>
+  </div>`).join('');
+}
+
+function updateCatSel(){
+  const sel=document.getElementById('sp-cat');
+  while(sel.options.length>2)sel.remove(2);
+  cats.forEach(cat=>{const o=new Option(`${cat.name} (${cat.breed})`,cat.id);sel.appendChild(o);});
+}
+
+function updateBadges(){
+  const myCats=me?cats.filter(c=>c.owner===me.id).map(c=>c.id):[];
+  const mp=sightings.filter(s=>s.status==='pending'&&myCats.includes(s.catId)).length;
+  document.getElementById('pending-badge').textContent=mp?`(${mp}) `:'';
+  const ua=notifs.filter(n=>n.unread).length+cats.filter(c=>c.lost).length;
+  document.getElementById('alert-badge').textContent=ua?`(${ua}) `:'';
+}
+
+// DETAIL PANEL
+function showDetail(catId){
+  selectedCat=catId;
+  const cat=cats.find(c=>c.id===catId);if(!cat)return;
+  const isOwn=me&&cat.owner===me.id;
+  document.getElementById('detail-name').innerHTML=`${cat.name}${cat.lost?`<span class="tag tag-lost" style="font-size:0.62rem">🚨 Vermist</span>`:''}`;
+  const ph=document.getElementById('detail-photo');
+  ph.innerHTML=cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱');
+  const owner=users.find(u=>u.id===cat.owner);
+  document.getElementById('detail-meta').textContent=`${cat.breed} · ${cat.address} · ${owner?owner.name:'Onbekend'}`;
+  document.getElementById('detail-bio').textContent=cat.bio;
+  const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
+  let btns=`<button class="btn btn-primary btn-sm" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${cat.id}'">🐾 Gespot!</button>`;
+  btns+=`<span style="font-size:0.74rem;color:var(--mid);align-self:center">${n} bevestigd${n!==1?'e':''} spot${n!==1?'s':''}</span>`;
+  if(isOwn){
+    btns+=`<button class="btn btn-outline btn-sm" onclick="openEditCat('${cat.id}')">✏️ Bewerken</button>`;
+    if(!cat.lost)btns+=`<button class="btn btn-lost btn-sm" onclick="openLostModal('${cat.id}')">🚨 Vermist</button>`;
+    else btns+=`<button class="btn btn-sm" style="background:#d1f0e0;color:#1a6636" onclick="markFound('${cat.id}')">✅ Gevonden!</button>`;
+    btns+=`<button class="btn btn-sm" style="background:#fde8e8;color:#9b2020;margin-left:auto" onclick="confirmDeleteCat('${cat.id}')">🗑️ Verwijderen</button>`;
+  }
+  document.getElementById('detail-actions').innerHTML=btns;
+  document.getElementById('cat-detail').classList.add('open');
+  renderCatsList();renderTerr(catId);map.panTo([cat.lat,cat.lng]);
+}
+
+function closeDetail(){
+  document.getElementById('cat-detail').classList.remove('open');
+  selectedCat=null;Object.values(terrLayers).forEach(l=>map.removeLayer(l));terrLayers={};
+  renderCatsList();
+}
+
+// LOST
+function openLostModal(catId){
+  lostCatId=catId;
+  const cat=cats.find(c=>c.id===catId);
+  document.getElementById('lost-modal-title').textContent=`🚨 ${cat.name} als vermist melden`;
+  openModal('lost-modal');
+}
+
+function doMarkLost(){
+  const cat=cats.find(c=>c.id===lostCatId);if(!cat)return;
+  cat.lost=true;
+  await sb.from('cats').update({lost:true}).eq('id',lostCatId);
+  const msg=document.getElementById('lost-msg').value;
+  notifs.unshift({id:'n'+Date.now(),title:`🚨 ${cat.name} is vermist!`,
+    body:`${cat.name} (${cat.breed}) vermist bij ${cat.address}. ${msg}`.trim(),
+    time:new Date().toISOString(),unread:true,type:'lost',catId:cat.id});
+  closeModal('lost-modal');document.getElementById('lost-msg').value='';
+  renderAll();showDetail(lostCatId);toast(`🚨 Vermeldingsmelding voor ${cat.name} verstuurd!`);switchTab('alerts');
+}
+
+function markFound(catId){
+  const cat=cats.find(c=>c.id===catId);if(!cat)return;
+  cat.lost=false;
+  await sb.from('cats').update({lost:false}).eq('id',catId);
+  notifs.unshift({id:'n'+Date.now(),title:`🎉 ${cat.name} is terecht!`,
+    body:`Goed nieuws: ${cat.name} is veilig thuis. Bedankt voor alle spottings!`,
+    time:new Date().toISOString(),unread:true,type:'found'});
+  renderAll();showDetail(catId);toast(`🎉 ${cat.name} is gevonden!`);
+}
+
+// MATCHER
+function onSpotCatChange(){
+  const val=document.getElementById('sp-cat').value;
+  const area=document.getElementById('matcher-area');
+  if(val==='unknown'&&(pickedLat||true)){area.style.display='block';area.innerHTML=buildMatcher(pickedLat||OUD[0],pickedLng||OUD[1]);}
+  else area.style.display='none';
+}
+
+function buildMatcher(lat,lng){
+  if(!cats.length)return'';
+  const scored=cats.map(cat=>{
+    const hd=gd(lat,lng,cat.lat,cat.lng);
+    const conf=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed');
+    const ns=conf.reduce((b,s)=>{const d=gd(lat,lng,s.lat,s.lng);return d<b?d:b;},9999);
+    const hs=Math.max(0,100-hd*1100);
+    const ss=ns<9999?Math.max(0,100-ns*2200):0;
+    const lb=cat.lost?22:0;
+    const score=Math.round(hs*.5+ss*.4+lb);
+    const reasons=[];
+    if(hd<0.002)reasons.push('Vlakbij thuisadres');else if(hd<0.006)reasons.push('Buurt van thuisadres');
+    if(ns<0.002)reasons.push('Eerder gespot hier');
+    if(cat.lost)reasons.push('🚨 Momenteel vermist');
+    return{cat,score,reason:reasons.join(' · ')||'Buurtkat'};
+  }).sort((a,b)=>b.score-a.score).slice(0,3);
+  return`<div style="font-size:0.72rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--mid);margin-bottom:5px">Waarschijnlijk gespot:</div>`+
+  scored.map(({cat,score,reason})=>`<div class="matcher-card" onclick="document.getElementById('sp-cat').value='${cat.id}';document.getElementById('matcher-area').style.display='none'">
+    <div class="matcher-score">${score}%</div>
+    <div class="matcher-info">
+      <div class="matcher-name">${cat.name}${cat.lost?' 🚨':''}</div>
+      <div style="font-size:0.74rem;color:var(--mid)">${cat.breed}</div>
+      <div style="font-size:0.72rem;color:var(--terracotta);margin-top:2px">${reason}</div>
+      <div class="match-bar"><div class="match-bar-fill" style="width:${score}%"></div></div>
+    </div></div>`).join('');
+}
+
+function gd(a,b,c,d){return Math.sqrt((a-c)**2+(b-d)**2);}
+
+// SIGHTING ACTIONS
+function submitSighting(){
+  const catId=document.getElementById('sp-cat').value;
+  const loc=document.getElementById('sp-loc').value.trim();
+  const time=document.getElementById('sp-time').value;
+  const notes=document.getElementById('sp-notes').value.trim();
+  const reporter=document.getElementById('sp-reporter').value.trim()||me?.name||'Anoniem';
+  const ph=document.getElementById('sp-prev');
+  if(!catId){toast('Selecteer een kat.',true);return;}
+  if(!loc&&!pickedLat){toast('Geef een locatie op.',true);return;}
+  const lat=pickedLat||(OUD[0]+(Math.random()-.5)*.008);
+  const lng=pickedLng||(OUD[1]+(Math.random()-.5)*.008);
+  const s={id:'s'+Date.now(),catId:catId==='unknown'?null:catId,location:loc||'Onbekend',lat,lng,
+    time:time||new Date().toISOString().slice(0,16),notes,photo:ph.style.display!=='none'?ph.src:null,
+    status:catId==='unknown'?'unmatched':'pending',reporter};
+  sightings.push(s);
+  await sb.from('sightings').insert({
+    id:s.id,cat_id:s.catId,location:s.location,lat:s.lat,lng:s.lng,
+    spotted_at:s.time,notes:s.notes,photo:s.photo,status:s.status,reporter:s.reporter
+  });
+  if(catId&&catId!=='unknown'){
+    const cat=cats.find(c=>c.id===catId);
+    if(cat){
+      notifs.unshift({id:'n'+Date.now(),title:`📍 ${cat.name} is gespot!`,
+        body:`${reporter} zag ${cat.name} bij ${s.location}. Bevestig de spotting.`,
+        time:new Date().toISOString(),unread:true,type:'sighting',catId});
+      // EMAIL HOOK — vervang door echte Supabase Edge Function call zodra live
+      if(cat.email){
+        console.log(`[EMAIL] Naar: ${cat.email} — Onderwerp: ${cat.name} is gespot bij ${s.location}`);
+        // Supabase voorbeeld (activeer als je live gaat):
+        // fetch('https://JOUW-PROJECT.supabase.co/functions/v1/notify-sighting', {
+        //   method:'POST', headers:{'Content-Type':'application/json'},
+        //   body: JSON.stringify({to: cat.email, catName: cat.name, location: s.location, reporter, photo: s.photo})
+        // });
+      }
+    }
+  }
+  closeModal('spot-modal');clearSpotForm();renderAll();
+  const cat=cats.find(c=>c.id===catId);
+  toast(cat?`Spotting van ${cat.name} verstuurd!`:'Bedankt! We proberen de kat te matchen.');
+  if(cat&&me&&cat.owner===me.id)switchTab('pending');else switchTab('alerts');
+}
+
+async function confirmS(id){
+  const s=sightings.find(x=>x.id===id);if(!s)return;s.status='confirmed';
+  await sb.from('sightings').update({status:'confirmed'}).eq('id',id);
+  const cat=cats.find(c=>c.id===s.catId);renderAll();if(selectedCat===s.catId)renderTerr(s.catId);
+  toast(`Bevestigd! Territorium van ${cat?cat.name:''} bijgewerkt. 🐾`);
+}
+async function denyS(id){
+  const s=sightings.find(x=>x.id===id);if(!s)return;s.status='denied';
+  await sb.from('sightings').update({status:'denied'}).eq('id',id);
+  renderAll();toast('Spotting afgewezen.');
+}
+function startPickLoc(){closeModal('spot-modal');pickingLoc=true;pickedLat=null;pickedLng=null;document.getElementById('map-hint').classList.add('visible');document.getElementById('sp-coords').textContent='';document.getElementById('sp-loc').value='';}
+
+// ADDRESS AUTOCOMPLETE
+let addrT=null, addrResults=[], addrFocusIdx=-1;
+const LOCAL_CITIES=['oudenaarde','wortegem','maarkedal','kruishoutem','zingem','petegem','edelare','bevere','ename','volkegem','heurne','leupegem','mater','mullem','welden','parike','nukerke','berchem','kwaremont','ronse'];
+
+function onAddrInput(){
+  clearTimeout(addrT);
+  const val=document.getElementById('f-addr').value.trim();
+  const el=document.getElementById('addr-st');
+  verLat=null;verLng=null;
+  el.className='addr-status';el.textContent='';
+  if(val.length<3){hideDrop();addrResults=[];return;}
+  el.className='addr-status addr-checking';el.textContent='⏳ Zoeken...';
+  addrT=setTimeout(()=>fetchAddrSuggestions(val),350);
+}
+
+async function fetchAddrSuggestions(q){
+  const el=document.getElementById('addr-st');
+  try{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),5000);
+    const query=encodeURIComponent(q+', België');
+    const url=`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=8&countrycodes=be&addressdetails=1&accept-language=nl`;
+    const r=await fetch(url,{signal:controller.signal});
+    clearTimeout(timeout);
+    if(!r.ok)throw new Error('http '+r.status);
+    const data=await r.json();
+    addrResults=data.map(d=>{
+      const a=d.address||{};
+      const city=(a.city||a.town||a.village||a.municipality||a.suburb||'');
+      const street=a.road||a.pedestrian||a.footway||'';
+      const num=a.house_number||'';
+      const isLocal=LOCAL_CITIES.some(c=>city.toLowerCase().includes(c));
+      const parts=[street+(num?' '+num:''),city,a.postcode].filter(Boolean);
+      const short=parts.join(', ');
+      return{short,full:d.display_name,lat:parseFloat(d.lat),lng:parseFloat(d.lon),isLocal,city,street};
+    });
+    addrResults.sort((a,b)=>b.isLocal-a.isLocal);
+    el.className='addr-status';el.textContent='';
+    if(addrResults.length)showDrop();
+    else{hideDrop();el.className='addr-status addr-err';el.textContent='Geen resultaten gevonden. Probeer: "Straatnaam huisnummer, Oudenaarde"';}
+  }catch(e){
+    hideDrop();
+    if(e.name==='AbortError'||e.message.includes('fetch')||e.message.includes('Failed')||e.message.includes('NetworkError')){
+      // Network blocked or offline — show manual fallback
+      el.className='addr-status addr-err';
+      el.innerHTML='⚠️ Zoekopdracht mislukt (geen verbinding met adresservice). <a href="#" onclick="useAddrManually();return false" style="color:var(--terracotta);font-weight:700;text-decoration:underline">Adres handmatig bevestigen →</a>';
+    } else {
+      el.className='addr-status addr-err';
+      el.innerHTML='⚠️ Fout bij zoeken. <a href="#" onclick="useAddrManually();return false" style="color:var(--terracotta);font-weight:700;text-decoration:underline">Handmatig bevestigen →</a>';
+    }
+  }
+}
+
+function useAddrManually(){
+  // Accept whatever is typed, place cat near Oudenaarde center (user can refine via map later)
+  verLat=OUD[0]+(Math.random()-.5)*.008;
+  verLng=OUD[1]+(Math.random()-.5)*.008;
+  const el=document.getElementById('addr-st');
+  el.className='addr-status addr-ok';
+  el.textContent='✓ Adres handmatig bevestigd (niet geverifieerd via kaart). Je kan de locatie later verfijnen.';
+  // Mark as manually confirmed but not truly verified
+  document.getElementById('f-addr').dataset.manualOk='1';
+}
+
+function showDrop(){
+  const dd=document.getElementById('addr-dropdown');
+  addrFocusIdx=-1;
+  if(!addrResults.length){dd.classList.remove('open');return;}
+  dd.innerHTML=addrResults.map((r,i)=>`
+    <div class="addr-option" id="addr-opt-${i}" onclick="selectAddr(${i})" onmouseover="addrFocusIdx=${i};highlightDrop()">
+      <div class="addr-option-main">${r.short||r.full.split(',')[0]}</div>
+      <div class="addr-option-sub">${r.full.split(',').slice(1,3).join(',').trim()}</div>
+      <span class="addr-option-badge ${r.isLocal?'addr-badge-local':'addr-badge-other'}">${r.isLocal?'✓ Regio Oudenaarde':'België'}</span>
+    </div>`).join('');
+  dd.classList.add('open');
+}
+
+function hideDrop(){document.getElementById('addr-dropdown').classList.remove('open');}
+
+function highlightDrop(){
+  document.querySelectorAll('.addr-option').forEach((el,i)=>el.classList.toggle('focused',i===addrFocusIdx));
+}
+
+function onAddrKey(e){
+  const dd=document.getElementById('addr-dropdown');
+  if(!dd.classList.contains('open'))return;
+  if(e.key==='ArrowDown'){e.preventDefault();addrFocusIdx=Math.min(addrFocusIdx+1,addrResults.length-1);highlightDrop();}
+  else if(e.key==='ArrowUp'){e.preventDefault();addrFocusIdx=Math.max(addrFocusIdx-1,0);highlightDrop();}
+  else if(e.key==='Enter'&&addrFocusIdx>=0){e.preventDefault();selectAddr(addrFocusIdx);}
+  else if(e.key==='Escape'){hideDrop();}
+}
+
+function selectAddr(i){
+  const r=addrResults[i];
+  document.getElementById('f-addr').value=r.short||r.full.split(',')[0];
+  verLat=r.lat;verLng=r.lng;
+  hideDrop();
+  const el=document.getElementById('addr-st');
+  if(r.isLocal){
+    el.className='addr-status addr-ok';
+    el.textContent=`✓ Gevonden: ${r.full.split(',').slice(0,3).join(', ')}`;
+  }else{
+    el.className='addr-status addr-err';
+    el.textContent=`⚠️ Adres buiten regio Oudenaarde — controleer of dit klopt.`;
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click',e=>{if(!document.getElementById('addr-wrap')?.contains(e.target))hideDrop();});
+
+// CAT CRUD
+function openEditCat(catId){
+  editCatId=catId;const cat=cats.find(c=>c.id===catId);if(!cat)return;
+  document.getElementById('cat-modal-title').textContent=`${cat.name} bewerken`;
+  document.getElementById('f-name').value=cat.name;
+  document.getElementById('f-addr').value=cat.address;
+  document.getElementById('f-breed').value=cat.breed;
+  document.getElementById('f-bio').value=cat.bio;
+  document.getElementById('f-email').value=cat.email||'';
+  const p=document.getElementById('f-prev');
+  if(cat.photo){p.src=cat.photo;p.style.display='block';}
+  const el=document.getElementById('addr-st');
+  el.textContent=cat.addrOk?'✓ Eerder geverifieerd':'';el.className='addr-status'+(cat.addrOk?' addr-ok':'');
+  openModal('add-cat-modal');
+}
+
+function saveCat(){
+  if(!me){toast('Log eerst in!',true);return;}
+  const name=document.getElementById('f-name').value.trim();
+  const addr=document.getElementById('f-addr').value.trim();
+  const breed=document.getElementById('f-breed').value.trim();
+  const bio=document.getElementById('f-bio').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const ph=document.getElementById('f-prev');
+  if(!name||!addr){toast('Vul naam en adres in.',true);return;}
+  const addrInput=document.getElementById('f-addr');
+  const addrOk=document.getElementById('addr-st').classList.contains('addr-ok')||addrInput.dataset.manualOk==='1';
+  if(editCatId){
+    const cat=cats.find(c=>c.id===editCatId);
+    Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:email||cat.email||'',
+      photo:ph.style.display!=='none'?ph.src:cat.photo,addrOk,
+      lat:verLat||cat.lat,lng:verLng||cat.lng});
+    await sb.from('cats').update({
+      name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
+      photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost
+    }).eq('id',cat.id);
+    toast(`${name} bijgewerkt!`);
+  }else{
+    const lat=verLat||(OUD[0]+(Math.random()-.5)*.01);
+    const lng=verLng||(OUD[1]+(Math.random()-.5)*.01);
+    const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email,
+      owner:me.id,photo:ph.style.display!=='none'?ph.src:null,emoji:'🐱',lat,lng,lost:false,addrOk};
+    cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
+    await sb.from('cats').insert({
+      id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
+      owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
+      lost:cat.lost,addr_ok:cat.addrOk
+    });
+    toast(`${name} toegevoegd! 🐱`);
+  }
+  editCatId=null;closeModal('add-cat-modal');clearCatForm();renderAll();
+}
+
+// LOGIN / REGISTER
+function buildPinGrids(){
+  buildPG('pin-grid-login','lk');buildPG('pin-grid-reg','rk');
+}
+function buildPG(id,pref){
+  const g=document.getElementById(id);g.innerHTML='';
+  [1,2,3,4,5,6,7,8,9,'',0,'⌫'].forEach(k=>{
+    const d=document.createElement('div');d.className='pin-key';d.textContent=k;
+    if(k!=='')d.onclick=()=>kpress(k,pref);
+    g.appendChild(d);
+  });
+}
+function kpress(k,pref){
+  if(pref==='lk'){
+    if(k==='⌫')loginPin=loginPin.slice(0,-1);else if(loginPin.length<4)loginPin+=k;
+    updDots('pd',loginPin);document.getElementById('pin-disp').textContent=loginPin.replace(/./g,'●')+'·'.repeat(4-loginPin.length);
+    if(loginPin.length===4)setTimeout(tryLogin,180);
+  }else{
+    if(k==='⌫')regPin=regPin.slice(0,-1);else if(regPin.length<4)regPin+=k;
+    updDots('rpd',regPin);document.getElementById('reg-pin-disp').textContent=regPin.replace(/./g,'●')+'·'.repeat(4-regPin.length);
+  }
+}
+function updDots(pref,buf){for(let i=0;i<4;i++){const d=document.getElementById(`${pref}${i}`);if(d)d.className='pin-dot'+(i<buf.length?' filled':'');}}
+function resetLoginPin(){loginPin='';updDots('pd','');document.getElementById('pin-disp').textContent='····';}
+function tryLogin(){
+  const name=document.getElementById('login-name').value.trim().toLowerCase();
+  const u=users.find(u=>u.name.toLowerCase()===name&&u.pin===loginPin);
+  if(u){setMe(u);closeModal('login-modal');}else{toast('Ongeldige naam of PIN.',true);resetLoginPin();}
+}
+function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  if(!name){toast('Vul een naam in.',true);return;}
+  if(regPin.length<4){toast('Kies een 4-cijferige PIN.',true);return;}
+  if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){toast('Naam al in gebruik.',true);return;}
+  const u={id:'u'+Date.now(),name,pin:regPin,cats:[]};users.push(u);
+  await sb.from('users').insert({id:u.id,name:u.name,pin:u.pin});
+  setMe(u);closeModal('login-modal');
+  document.getElementById('reg-name').value='';regPin='';updDots('rpd','');
+  document.getElementById('reg-pin-disp').textContent='····';
+}
+function setMe(u){
+  me=u;
+  document.getElementById('header-username').textContent=u.name;
+  document.getElementById('header-avatar').textContent=u.name[0].toUpperCase();
+  renderAll();toast(`Welkom, ${u.name}! 👋`);
+}
+function toRegister(){document.getElementById('login-area').style.display='none';document.getElementById('register-area').style.display='block';}
+function toLogin(){document.getElementById('login-area').style.display='block';document.getElementById('register-area').style.display='none';}
+
+// MODALS / UI
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='add-cat-modal'){
+    const noLogin=document.getElementById('need-login-msg');
+    const fields=document.getElementById('cat-fields');
+    noLogin.style.display=me?'none':'block';fields.style.display=me?'block':'none';
+    if(!editCatId)document.getElementById('cat-modal-title').textContent='Kat registreren';
+  }
+  if(id==='spot-modal'){
+    const now=new Date();document.getElementById('sp-time').value=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+    if(me)document.getElementById('sp-reporter').value=me.name;
+  }
+  if(id==='login-modal'){buildPinGrids();resetLoginPin();}
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');pickingLoc=false;document.getElementById('map-hint').classList.remove('visible');}
+function switchTab(tab){
+  const tabs=['cats','sightings','pending','alerts'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='alerts')notifs.forEach(n=>n.unread=false);updateBadges();
+}
+function prevImg(input,prevId){const p=document.getElementById(prevId);if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{p.src=e.target.result;p.style.display='block';};r.readAsDataURL(input.files[0]);}}
+function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
+function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-email'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();}
+function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;}
+function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
+
+document.querySelectorAll('.modal-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el){closeModal(el.id);if(el.id==='add-cat-modal')editCatId=null;}});});
+document.addEventListener('click',e=>{
+  const menu=document.getElementById('user-menu');
+  const pill=document.getElementById('user-pill');
+  if(menu&&!menu.contains(e.target)&&!pill.contains(e.target))menu.classList.remove('open');
+});
+async function loadFromSupabase(){
+  try{
+    const [u,c,s]=await Promise.all([
+      sb.from('users').select('*'),
+      sb.from('cats').select('*'),
+      sb.from('sightings').select('*')
+    ]);
+    if(u.data?.length)users=u.data.map(r=>({id:r.id,name:r.name,pin:r.pin,cats:[]}));
+    if(c.data?.length)cats=c.data.map(r=>({
+      id:r.id,name:r.name,address:r.address,breed:r.breed,bio:r.bio,
+      email:r.email||'',owner:r.owner_id,photo:r.photo,emoji:r.emoji||'🐱',
+      lat:r.lat,lng:r.lng,lost:r.lost,addrOk:r.addr_ok
+    }));
+    if(s.data?.length)sightings=s.data.map(r=>({
+      id:r.id,catId:r.cat_id,location:r.location,lat:r.lat,lng:r.lng,
+      time:r.spotted_at,notes:r.notes,photo:r.photo,status:r.status,reporter:r.reporter
+    }));
+    // Realtime: herlaad data bij wijzigingen van andere gebruikers
+    sb.channel('live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'cats'},()=>loadFromSupabase())
+      .on('postgres_changes',{event:'*',schema:'public',table:'sightings'},()=>loadFromSupabase())
+      .subscribe();
+    renderAll();
+  }catch(e){console.error('Supabase laad fout:',e);renderAll();}
+}
+
+window.onload=async()=>{
+  initMap();
+  await loadFromSupabase();
+  // Auto-login eerste gebruiker als die bestaat, anders wachten
+  if(users.length)setMe(users[0]);
+  // PWA service worker registreren
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js')
+      .then(r=>console.log('SW geregistreerd:',r.scope))
+      .catch(e=>console.log('SW fout:',e));
+  }
+};
+
+// GPS + NEARBY PANEL
+let gpsMarker=null;
+
+function openNearby(){
+  const panel=document.getElementById('nearby-panel');
+  panel.classList.add('open');
+  document.getElementById('nearby-content').innerHTML=
+    '<div style="font-size:0.82rem;color:var(--mid);text-align:center;padding:10px 0;">Klik "Gebruik GPS" of kies een locatie op de kaart.</div>';
+}
+function closeNearby(){document.getElementById('nearby-panel').classList.remove('open');}
+
+function useGPS(){
+  if(!navigator.geolocation){toast('GPS niet beschikbaar op dit apparaat.',true);return;}
+  const el=document.getElementById('nearby-content');
+  el.innerHTML='<div style="font-size:0.82rem;color:var(--mid);text-align:center;padding:10px 0;">📡 Locatie ophalen...</div>';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const lat=pos.coords.latitude, lng=pos.coords.longitude;
+      placeGPSDot(lat,lng);
+      showNearbyCats(lat,lng);
+    },
+    err=>{
+      const msgs={1:'Locatietoegang geweigerd.',2:'Locatie niet beschikbaar.',3:'Time-out.'};
+      toast(msgs[err.code]||'GPS fout.',true);
+      document.getElementById('nearby-content').innerHTML=
+        '<div style="font-size:0.82rem;color:var(--mid);">Kon locatie niet ophalen. Kies handmatig op de kaart.</div>';
+    },
+    {enableHighAccuracy:true,timeout:8000}
+  );
+}
+
+function placeGPSDot(lat,lng){
+  if(gpsMarker)map.removeLayer(gpsMarker);
+  gpsMarker=L.marker([lat,lng],{icon:L.divIcon({
+    html:'<div class="gps-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]
+  })}).addTo(map);
+  map.setView([lat,lng],16);
+}
+
+function showNearbyCats(lat,lng){
+  const el=document.getElementById('nearby-content');
+  if(!cats.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--mid);">Nog geen katten geregistreerd.</div>';return;}
+
+  const scored=cats.map(cat=>{
+    const conf=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed');
+    const allPts=[{lat:cat.lat,lng:cat.lng},...conf.map(s=>({lat:s.lat,lng:s.lng}))];
+    const homeDist=gd(lat,lng,cat.lat,cat.lng);
+    // Check if point is inside territory polygon (simple bounding box + closest point)
+    const closestPt=allPts.reduce((b,p)=>{const d=gd(lat,lng,p.lat,p.lng);return d<b.d?{d,p}:b;},{d:9999,p:null});
+    const inTerritory=closestPt.d<0.003;
+    const distKm=Math.round(homeDist*111*100)/100; // rough degrees→km
+    return{cat,homeDist,distKm,inTerritory,closestPt:closestPt.d};
+  }).sort((a,b)=>a.homeDist-b.homeDist).slice(0,5);
+
+  const nearby=scored.filter(s=>s.homeDist<0.02); // ~2km radius
+  if(!nearby.length){
+    el.innerHTML='<div style="font-size:0.82rem;color:var(--mid);padding:8px 0;">Geen katten gevonden binnen 2km. Vergroot de zoekradius of check de kaart.</div>';
+    return;
+  }
+
+  el.innerHTML=nearby.map(({cat,distKm,inTerritory})=>`
+    <div class="nearby-cat-row" onclick="closeNearby();showDetail('${cat.id}')">
+      <div class="nearby-thumb">${cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱')}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:0.88rem;display:flex;align-items:center;gap:5px;">
+          ${cat.name}
+          ${inTerritory?'<span class="tag tag-territory" style="margin-top:0;font-size:0.6rem">In territorium</span>':''}
+          ${cat.lost?'<span class="tag tag-lost" style="margin-top:0;font-size:0.6rem">🚨</span>':''}
+        </div>
+        <div class="nearby-dist">${cat.breed}</div>
+        <div class="nearby-dist">📍 ${distKm<1?Math.round(distKm*1000)+'m':distKm+'km'} van thuisadres</div>
+      </div>
+    </div>
+    <div style="padding:4px 0 8px 52px;">
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();closeNearby();
+        openModal('spot-modal');document.getElementById('sp-cat').value='${cat.id}';
+        pickedLat=${null};pickedLng=${null};">
+        🐾 Dit is ${cat.name}!
+      </button>
+    </div>`).join('');
+}
+
+// Also trigger nearby when location is picked on map (for anon users)
+function showNearbyFromMap(lat,lng){
+  placeGPSDot(lat,lng);
+  document.getElementById('nearby-panel').classList.add('open');
+  showNearbyCats(lat,lng);
+}
+
+// USER MENU
+function toggleUserMenu(e){
+  e.stopPropagation();
+  if(!me){openModal('login-modal');return;}
+  document.getElementById('user-menu').classList.toggle('open');
+}
+function doLogout(){
+  me=null;
+  document.getElementById('header-username').textContent='Log in';
+  document.getElementById('header-avatar').textContent='👤';
+  document.getElementById('user-menu').classList.remove('open');
+  closeDetail();renderAll();toast('Uitgelogd.');
+}
+
+// PROFILE
+function openProfileModal(){
+  document.getElementById('user-menu').classList.remove('open');
+  if(!me)return;
+  document.getElementById('prof-name').value=me.name;
+  document.getElementById('prof-old-pin').value='';
+  document.getElementById('prof-new-pin').value='';
+  document.getElementById('prof-confirm-pin').value='';
+  openModal('profile-modal');
+}
+function saveProfile(){
+  if(!me)return;
+  const name=document.getElementById('prof-name').value.trim();
+  const oldPin=document.getElementById('prof-old-pin').value;
+  const newPin=document.getElementById('prof-new-pin').value;
+  const confirmPin=document.getElementById('prof-confirm-pin').value;
+  if(!name){toast('Naam mag niet leeg zijn.',true);return;}
+  // Check duplicate name (ignoring self)
+  if(users.find(u=>u.id!==me.id&&u.name.toLowerCase()===name.toLowerCase())){toast('Naam al in gebruik.',true);return;}
+  // PIN change requested?
+  if(newPin||oldPin||confirmPin){
+    if(oldPin!==me.pin){toast('Huidige PIN is onjuist.',true);return;}
+    if(newPin.length!==4||!/^\d{4}$/.test(newPin)){toast('Nieuwe PIN moet 4 cijfers zijn.',true);return;}
+    if(newPin!==confirmPin){toast('Nieuwe PINs komen niet overeen.',true);return;}
+    me.pin=newPin;
+  }
+  me.name=name;
+  await sb.from('users').update({name:me.name,pin:me.pin}).eq('id',me.id);
+  setMe(me);
+  closeModal('profile-modal');
+  toast('Profiel opgeslagen! ✓');
+}
+
+// CONFIRM DIALOG
+let confirmCallback=null;
+function showConfirm(icon,title,body,okLabel,okStyle,cb){
+  document.getElementById('confirm-icon').textContent=icon;
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-body').textContent=body;
+  const btn=document.getElementById('confirm-ok-btn');
+  btn.textContent=okLabel;
+  btn.className='btn '+(okStyle||'btn-lost');
+  confirmCallback=cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('open');confirmCallback=null;}
+function confirmOk(){if(confirmCallback)confirmCallback();closeConfirm();}
+
+// DELETE CAT
+function confirmDeleteCat(catId){
+  const cat=cats.find(c=>c.id===catId);if(!cat)return;
+  showConfirm('🗑️',`${cat.name} verwijderen?`,
+    `Dit verwijdert ${cat.name} en alle bijbehorende spottings permanent. Dit kan niet ongedaan gemaakt worden.`,
+    'Ja, verwijderen','btn-lost',()=>deleteCat(catId));
+}
+async function deleteCat(catId){
+  cats=cats.filter(c=>c.id!==catId);
+  sightings=sightings.filter(s=>s.catId!==catId);
+  if(me)me.cats=(me.cats||[]).filter(id=>id!==catId);
+  await sb.from('cats').delete().eq('id',catId);
+  closeDetail();renderAll();toast('Kat verwijderd.');
+}
+
+// UNDO / DELETE SIGHTING
+function undoConfirmS(id){
+  const s=sightings.find(x=>x.id===id);if(!s)return;
+  showConfirm('↩','Spotting terugzetten?',
+    'De spotting wordt teruggezet naar "in behandeling" en het territorium wordt aangepast.',
+    'Ja, terugzetten','btn-outline btn-forest',()=>{
+      s.status='pending';
+      await sb.from('sightings').update({status:'pending'}).eq('id',id);
+      renderAll();if(selectedCat===s.catId)renderTerr(s.catId);
+      toast('Spotting teruggedraaid naar pending.');
+    });
+}
+function confirmDeleteSighting(id){
+  showConfirm('🗑️','Spotting verwijderen?',
+    'De spotting wordt permanent verwijderd en het territorium verkleint.',
+    'Ja, verwijderen','btn-lost',()=>{
+      sightings=sightings.filter(x=>x.id!==id);
+      await sb.from('sightings').delete().eq('id',id);
+      renderAll();if(selectedCat)renderTerr(selectedCat);
+      toast('Spotting verwijderd.');
+    });
+}
+</script>
+</body>
+</html>
