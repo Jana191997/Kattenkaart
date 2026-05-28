@@ -233,7 +233,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <button class="tab-btn" onclick="switchTab('alerts')">🔔 <span id="alert-badge"></span>Alerts</button>
     </div>
     <div id="tab-cats" class="tab-content active">
-      <div><div class="section-title">Katten in de buurt</div><div class="section-sub">Klik een kat om het territorium te zien.</div></div>
+      <div><div class="section-title">Katten in de buurt</div><div class="section-sub">Gebruik GPS of klik op de kaart — katten binnen 500m verschijnen hier.</div></div>
       <div id="cats-list"></div>
     </div>
     <div id="tab-sightings" class="tab-content">
@@ -500,6 +500,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 const OUD=[50.8477,3.6069];
 let me=null, editCatId=null, pickingLoc=false, pickedLat=null, pickedLng=null;
 let verLat=null, verLng=null, addrTimer=null;
+let currentLat=null, currentLng=null; // user's current location for nearby filtering
 let map, catMkrs={}, sightMkrs=[], terrLayers={};
 let selectedCat=null, lostCatId=null;
 let loginPin='', regPin='';
@@ -526,6 +527,7 @@ function onMapClick(e){
   document.getElementById('map-hint').classList.remove('visible');
   document.getElementById('sp-coords').textContent=`📍 ${pickedLat.toFixed(5)}, ${pickedLng.toFixed(5)}`;
   document.getElementById('sp-loc').value=`Kaartlocatie (${pickedLat.toFixed(4)}, ${pickedLng.toFixed(4)})`;
+  currentLat=pickedLat; currentLng=pickedLng; renderCatsList();
   openModal('spot-modal');
   if(document.getElementById('sp-cat').value==='unknown'){onSpotCatChange();}
   toast('Locatie ingesteld!');
@@ -609,21 +611,50 @@ function renderAll(){
 // SIDEBAR
 function renderCatsList(){
   const el=document.getElementById('cats-list');
-  if(!cats.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">🐾</div>Nog geen katten. Wees de eerste!</div>`;return;}
-  el.innerHTML=cats.map(cat=>{
-    const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
-    const isOwn=me&&cat.owner===me.id;
-    return`<div class="cat-card${selectedCat===cat.id?' selected':''}${cat.lost?' lost-card':''}" onclick="showDetail('${cat.id}')">
-      ${isOwn?'<span class="tag tag-own">Mijn kat</span>':''}
-      <div class="cat-card-img">${cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱')}</div>
-      <div class="cat-card-body">
-        <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost lost-pulse">🚨 Vermist</span>':''}</div>
-        <div class="cat-meta">${cat.breed}</div>
-        <div class="cat-bio">${cat.bio.substring(0,78)}${cat.bio.length>78?'…':''}</div>
-        <span class="tag tag-territory">📍 ${n} spot${n!==1?'s':''}</span>
-        <span class="tag ${cat.addrOk?'tag-verified':'tag-unverified'}">${cat.addrOk?'✓ Adres OK':'⏳ Niet geverif.'}</span>
-      </div></div>`;
-  }).join('');
+  if(!cats.length){
+    el.innerHTML=`<div class="empty-state"><div class="big-icon">🐾</div>Nog geen katten geregistreerd.</div>`;
+    return;
+  }
+  // Filter to nearby cats if we have a location, otherwise show empty state
+  const userLat=currentLat, userLng=currentLng;
+  let visibleCats;
+  if(userLat){
+    visibleCats=cats
+      .map(c=>({cat:c,dist:gd(userLat,userLng,c.lat,c.lng)}))
+      .filter(x=>x.dist<0.0045) // ~500m
+      .sort((a,b)=>a.dist-b.dist)
+      .map(x=>x.cat);
+  } else {
+    // No location yet — show own cats only, others need location
+    visibleCats=me?cats.filter(c=>c.owner===me.id):[];
+  }
+
+  let html='';
+  if(!userLat){
+    html+=`<div class="info-box" style="margin-bottom:8px;">
+      📍 Gebruik GPS of klik op de kaart om katten in jouw buurt te zien.
+      <button class="btn btn-forest btn-sm" style="margin-top:7px;width:100%" onclick="openNearby()">📡 Mijn locatie gebruiken</button>
+    </div>`;
+  }
+  if(visibleCats.length){
+    html+=visibleCats.map(cat=>{
+      const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
+      const isOwn=me&&cat.owner===me.id;
+      return`<div class="cat-card${selectedCat===cat.id?' selected':''}${cat.lost?' lost-card':''}" onclick="showDetail('${cat.id}')">
+        ${isOwn?'<span class="tag tag-own">Mijn kat</span>':''}
+        <div class="cat-card-img">${cat.photo?`<img src="${cat.photo}">`:(cat.emoji||'🐱')}</div>
+        <div class="cat-card-body">
+          <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost lost-pulse">🚨 Vermist</span>':''}</div>
+          <div class="cat-meta">${cat.breed}</div>
+          <div class="cat-bio">${cat.bio.substring(0,78)}${cat.bio.length>78?'…':''}</div>
+          <span class="tag tag-territory">📍 ${n} spot${n!==1?'s':''}</span>
+          <span class="tag ${cat.addrOk?'tag-verified':'tag-unverified'}">${cat.addrOk?'✓ Adres OK':'⏳ Niet geverif.'}</span>
+        </div></div>`;
+    }).join('');
+  } else if(userLat){
+    html+=`<div class="empty-state"><div class="big-icon">🔍</div>Geen katten gevonden binnen 500m.</div>`;
+  }
+  el.innerHTML=html;
 }
 
 function renderSightList(){
@@ -1248,6 +1279,9 @@ function placeGPSDot(lat,lng){
     html:'<div class="gps-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]
   })}).addTo(map);
   map.setView([lat,lng],16);
+  // Update current location and refresh cats list
+  currentLat=lat; currentLng=lng;
+  renderCatsList();
 }
 
 function showNearbyCats(lat,lng){
