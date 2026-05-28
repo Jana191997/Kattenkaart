@@ -783,10 +783,21 @@ function dotIcon(status){
 
 function renderCatMkrs(){
   Object.values(catMkrs).forEach(m=>map.removeLayer(m));catMkrs={};
-  // Count cats at same location (within ~30m)
-  cats.forEach(cat=>{
-    const nearby=cats.filter(c=>c.id!==cat.id&&gd(cat.lat,cat.lng,c.lat,c.lng)<0.0003).length;
-    const m=L.marker([cat.lat,cat.lng],{icon:mkIcon(cat,nearby+1>1?nearby+1:0)})
+  // Group cats at same location and spread them out slightly
+  cats.forEach((cat,idx)=>{
+    const sameSpot=cats.filter(c=>c.id!==cat.id&&gd(cat.lat,cat.lng,c.lat,c.lng)<0.0001);
+    let lat=cat.lat, lng=cat.lng;
+    if(sameSpot.length>0){
+      // Spread cats in a small circle — each gets a different angle
+      const allAtSpot=cats.filter(c=>gd(cat.lat,cat.lng,c.lat,c.lng)<0.0001);
+      const posIdx=allAtSpot.findIndex(c=>c.id===cat.id);
+      const total=allAtSpot.length;
+      const angle=(2*Math.PI/total)*posIdx;
+      const offset=0.00015; // ~15m offset
+      lat=cat.lat+Math.sin(angle)*offset;
+      lng=cat.lng+Math.cos(angle)*offset;
+    }
+    const m=L.marker([lat,lng],{icon:mkIcon(cat,0)})
       .addTo(map).on('click',()=>showDetail(cat.id));
     catMkrs[cat.id]=m;
   });
