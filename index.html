@@ -522,18 +522,26 @@ function initMap(){
 }
 
 function onMapClick(e){
-  if(!pickingLoc)return;
-  pickedLat=e.latlng.lat;pickedLng=e.latlng.lng;
-  pickingLoc=false;
-  document.getElementById('map-hint').classList.remove('visible');
-  document.getElementById('sp-coords').textContent=`📍 ${pickedLat.toFixed(5)}, ${pickedLng.toFixed(5)}`;
-  document.getElementById('sp-loc').value=`Kaartlocatie (${pickedLat.toFixed(4)}, ${pickedLng.toFixed(4)})`;
-  currentLat=pickedLat; currentLng=pickedLng; renderCatsList();
-  openModal('spot-modal');
-  if(document.getElementById('sp-cat').value==='unknown'){onSpotCatChange();}
-  toast('Locatie ingesteld!');
-  // Also show nearby cats for anonymous users
-  if(!me){showNearbyFromMap(pickedLat,pickedLng);}
+  const lat=e.latlng.lat, lng=e.latlng.lng;
+  // Always update current location silently
+  currentLat=lat; currentLng=lng;
+  placeGPSDot(lat,lng);
+  renderCatsList();
+
+  if(pickingLocForSpot){
+    // User came from spot modal — fill in location and go back
+    pickingLocForSpot=false; pickingLoc=false;
+    document.getElementById('map-hint').classList.remove('visible');
+    pickedLat=lat; pickedLng=lng;
+    document.getElementById('sp-coords').textContent=`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    document.getElementById('sp-loc').value=`Kaartlocatie (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    openModal('spot-modal');
+    if(document.getElementById('sp-cat').value==='unknown'){onSpotCatChange();}
+    toast('Locatie ingesteld! ✓');
+  } else {
+    // Normal click — just show nearby cats in sidebar, no popup
+    switchTab('cats');
+  }
 }
 
 // Breed → emoji mapping
@@ -933,8 +941,7 @@ async function denyS(id){
 }
 function startPickLoc(){
   closeModal('spot-modal');
-  pickingLoc=true;pickingLocForSpot=true;
-  pickedLat=null;pickedLng=null;
+  pickingLoc=true; pickingLocForSpot=true;
   document.getElementById('map-hint').classList.add('visible');
   document.getElementById('sp-coords').textContent='';
   document.getElementById('sp-loc').value='';
