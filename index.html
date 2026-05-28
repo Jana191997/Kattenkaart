@@ -77,6 +77,10 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .cat-card-body{padding:8px 10px;flex:1;min-width:0;overflow:hidden;}
 .section-label{font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
   color:var(--mid);padding:4px 2px 2px;}
+.emoji-opt{font-size:1.6rem;padding:6px 8px;border-radius:8px;cursor:pointer;border:2px solid transparent;
+  transition:all 0.15s;background:var(--cream);}
+.emoji-opt:hover{border-color:var(--border);transform:scale(1.1);}
+.emoji-opt.selected{border-color:var(--terracotta);background:rgba(192,98,58,0.08);}
 .thumb-opt{cursor:pointer;text-align:center;flex:1;}
 .thumb-opt-preview{width:100%;height:60px;background:linear-gradient(135deg,#c8b8a2,#a89880);
   border-radius:7px;border:2px solid var(--border);overflow:hidden;background-size:cover;
@@ -107,8 +111,16 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--forest);color:white;padding:7px 15px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;}
 .map-hint.visible{opacity:1;}
-.lost-banner{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--lost);color:white;padding:7px 16px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;display:none;white-space:nowrap;}
+.lost-banner{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--lost);color:white;
+  padding:8px 18px;border-radius:20px;font-size:0.76rem;font-weight:700;z-index:400;display:none;
+  white-space:nowrap;cursor:pointer;box-shadow:0 2px 12px rgba(176,48,48,0.4);
+  animation:lostpulse 2s infinite;}
 .lost-banner.visible{display:block;}
+@media(max-width:700px){
+  .lost-banner{top:auto;bottom:60px;left:50%;transform:translateX(-50%);
+    white-space:normal;text-align:center;max-width:calc(100vw - 32px);
+    border-radius:12px;padding:10px 16px;line-height:1.4;}
+}
 .cat-detail{display:none;position:absolute;bottom:0;left:0;right:0;background:var(--warm-white);border-top:1px solid var(--border);border-radius:14px 14px 0 0;padding:16px 18px;z-index:500;box-shadow:0 -4px 20px rgba(0,0,0,0.1);max-height:46%;overflow-y:auto;}
 .cat-detail.open{display:block;}
 .detail-close{position:absolute;top:12px;right:13px;background:var(--border);border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:0.82rem;display:flex;align-items:center;justify-content:center;}
@@ -262,7 +274,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 
   <div class="map-container" style="flex:1;position:relative;">
     <div class="map-hint" id="map-hint">Klik op de kaart om een locatie te kiezen</div>
-    <div class="lost-banner" id="lost-banner">🚨 Vermiste katten in de buurt — zie rode markers</div>
+    <div class="lost-banner" id="lost-banner" onclick="switchTab('alerts')">🚨 Vermiste katten in de buurt — tik voor meer info</div>
     <div class="nearby-panel" id="nearby-panel">
       <button class="detail-close" onclick="closeNearby()" style="position:absolute;top:10px;right:10px;">✕</button>
       <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:10px;">📡 Katten in jouw buurt</div>
@@ -366,6 +378,20 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
         <div class="form-group">
           <label class="form-label">Ras / Omschrijving</label>
           <input class="form-input" id="f-breed" placeholder="bv. Oranje tabby, pluizige staart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icoontje op de kaart</label>
+          <div id="emoji-picker" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;">
+            <div class="emoji-opt selected" data-emoji="🐱" onclick="selectEmoji(this)">🐱</div>
+            <div class="emoji-opt" data-emoji="🐈" onclick="selectEmoji(this)">🐈</div>
+            <div class="emoji-opt" data-emoji="🐈‍⬛" onclick="selectEmoji(this)">🐈‍⬛</div>
+            <div class="emoji-opt" data-emoji="😺" onclick="selectEmoji(this)">😺</div>
+            <div class="emoji-opt" data-emoji="😸" onclick="selectEmoji(this)">😸</div>
+            <div class="emoji-opt" data-emoji="😻" onclick="selectEmoji(this)">😻</div>
+            <div class="emoji-opt" data-emoji="🦁" onclick="selectEmoji(this)">🦁</div>
+            <div class="emoji-opt" data-emoji="🐯" onclick="selectEmoji(this)">🐯</div>
+            <div class="emoji-opt" data-emoji="🐾" onclick="selectEmoji(this)">🐾</div>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Geboortedatum <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(optioneel)</span></label>
@@ -1298,10 +1324,10 @@ function openEditCat(catId){
   el.textContent=cat.addrOk?'✓ Eerder geverifieerd':'';el.className='addr-status'+(cat.addrOk?' addr-ok':'');
   loadExtraPhotosForEdit(cat);
   currentThumbPos=cat.thumbPos||'center top';
-  // Pre-select correct thumb option
   document.querySelectorAll('.thumb-opt').forEach(o=>{
     o.classList.toggle('selected',o.dataset.pos===currentThumbPos);
   });
+  setEmojiPicker(cat.emoji||'🐱');
   openModal('add-cat-modal');
 }
 
@@ -1347,7 +1373,7 @@ async function saveCat(){
     const lng=verLng||(OUD[1]+(Math.random()-.5)*.01);
     const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email,
       owner:me.id,photo:mainPhotoUrl||null,thumbPos:currentThumbPos,birthdate,
-      emoji:breedEmoji(breed),extraPhotos,lat,lng,lost:false,addrOk};
+      emoji:currentEmoji,extraPhotos,lat,lng,lost:false,addrOk};
     cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
     const {error:insertErr}=await sb.from('cats').insert({
       id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
@@ -1486,7 +1512,7 @@ function prevImg(input,prevId){
   }
 }
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
-function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-birthdate'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
+function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-birthdate'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';currentEmoji='🐱';setEmojiPicker('🐱');renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
 function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;pendingSpotPhoto=null;}
 function tryParse(s){try{return JSON.parse(s);}catch{return[];}}
 function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
@@ -1788,6 +1814,26 @@ function calcAge(birthdate){
   const rem=months%12;
   if(rem===0)return`${years} jaar`;
   return`${years} jaar en ${rem} maand${rem!==1?'en':''}`;
+}
+
+// EMOJI PICKER
+let currentEmoji='🐱';
+function selectEmoji(el){
+  document.querySelectorAll('.emoji-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  currentEmoji=el.dataset.emoji;
+}
+function setEmojiPicker(emoji){
+  currentEmoji=emoji||'🐱';
+  document.querySelectorAll('.emoji-opt').forEach(o=>{
+    o.classList.toggle('selected', o.dataset.emoji===currentEmoji);
+  });
+  // If emoji not in picker, select first
+  const found=document.querySelector(`.emoji-opt[data-emoji="${currentEmoji}"]`);
+  if(!found){
+    currentEmoji='🐱';
+    document.querySelector('.emoji-opt')?.classList.add('selected');
+  }
 }
 
 // THUMBNAIL POSITION
