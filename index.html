@@ -501,6 +501,7 @@ const OUD=[50.8477,3.6069];
 let me=null, editCatId=null, pickingLoc=false, pickedLat=null, pickedLng=null;
 let verLat=null, verLng=null, addrTimer=null;
 let currentLat=null, currentLng=null; // user's current location for nearby filtering
+let pickingLocForSpot=false; // true when picking location specifically for a spotting
 let map, catMkrs={}, sightMkrs=[], terrLayers={};
 let selectedCat=null, lostCatId=null;
 let loginPin='', regPin='';
@@ -930,7 +931,14 @@ async function denyS(id){
   await sb.from('sightings').update({status:'denied'}).eq('id',id);
   renderAll();toast('Spotting afgewezen.');
 }
-function startPickLoc(){closeModal('spot-modal');pickingLoc=true;pickedLat=null;pickedLng=null;document.getElementById('map-hint').classList.add('visible');document.getElementById('sp-coords').textContent='';document.getElementById('sp-loc').value='';}
+function startPickLoc(){
+  closeModal('spot-modal');
+  pickingLoc=true;pickingLocForSpot=true;
+  pickedLat=null;pickedLng=null;
+  document.getElementById('map-hint').classList.add('visible');
+  document.getElementById('sp-coords').textContent='';
+  document.getElementById('sp-loc').value='';
+}
 
 // ADDRESS AUTOCOMPLETE
 let addrT=null, addrResults=[], addrFocusIdx=-1;
