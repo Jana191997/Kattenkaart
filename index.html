@@ -6,7 +6,7 @@
 <title>KattenKaart België</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#3a5e4e">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="KattenKaart">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1335,11 +1335,12 @@ async function saveCat(){
     Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:me.email||'',
       photo:mainPhotoUrl||cat.photo,thumbPos:currentThumbPos,birthdate,addrOk,extraPhotos,
       lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:breedEmoji(breed||cat.breed)});
-    await sb.from('cats').update({
+    const {error:updateErr}=await sb.from('cats').update({
       name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
       emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
     }).eq('id',cat.id);
+    if(updateErr){console.error('Update error:',updateErr);toast(`Fout: ${updateErr.message}`,true);return;}
     toast(`${name} bijgewerkt!`);
   }else{
     const lat=verLat||(OUD[0]+(Math.random()-.5)*.01);
@@ -1348,11 +1349,18 @@ async function saveCat(){
       owner:me.id,photo:mainPhotoUrl||null,thumbPos:currentThumbPos,birthdate,
       emoji:breedEmoji(breed),extraPhotos,lat,lng,lost:false,addrOk};
     cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
-    await sb.from('cats').insert({
+    const {error:insertErr}=await sb.from('cats').insert({
       id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
-      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
+      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos),
+      thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
     });
+    if(insertErr){
+      console.error('Insert error:',insertErr);
+      toast(`Fout bij opslaan: ${insertErr.message}`,true);
+      cats.pop(); // remove from local array if DB failed
+      return;
+    }
     toast(`${name} toegevoegd! 🐱`);
   }
   editCatId=null;closeModal('add-cat-modal');clearCatForm();renderAll();
@@ -1480,6 +1488,7 @@ function prevImg(input,prevId){
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
 function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-birthdate'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
 function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;pendingSpotPhoto=null;}
+function tryParse(s){try{return JSON.parse(s);}catch{return[];}}
 function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
 
 document.querySelectorAll('.modal-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el){closeModal(el.id);if(el.id==='add-cat-modal')editCatId=null;}});});
@@ -1495,15 +1504,19 @@ async function loadFromSupabase(){
       sb.from('cats').select('*'),
       sb.from('sightings').select('*')
     ]);
+    if(u.error)console.error('Users error:',u.error.message);
+    if(c.error)console.error('Cats error:',c.error.message);
+    if(s.error)console.error('Sightings error:',s.error.message);
     if(u.data?.length)users=u.data.map(r=>({id:r.id,name:r.name,pin:r.pin,email:r.email||'',cats:[]}));
     if(c.data?.length)cats=c.data.map(r=>({
-      id:r.id,name:r.name,address:r.address,breed:r.breed,bio:r.bio,
-      email:r.email||'',owner:r.owner_id,photo:r.photo,
+      id:r.id,name:r.name,address:r.address||'',breed:r.breed||'',bio:r.bio||'',
+      email:r.email||'',owner:r.owner_id,photo:r.photo||null,
       emoji:r.emoji||breedEmoji(r.breed),
       thumbPos:r.thumb_pos||'center top',
       birthdate:r.birthdate||null,
-      extraPhotos:r.extra_photos?JSON.parse(r.extra_photos):[],
-      lat:r.lat,lng:r.lng,lost:r.lost,addrOk:r.addr_ok
+      extraPhotos:r.extra_photos?tryParse(r.extra_photos):[],
+      lat:parseFloat(r.lat)||0,lng:parseFloat(r.lng)||0,
+      lost:r.lost||false,addrOk:r.addr_ok||false
     }));
     if(s.data?.length)sightings=s.data.map(r=>({
       id:r.id,catId:r.cat_id,location:r.location,lat:r.lat,lng:r.lng,
