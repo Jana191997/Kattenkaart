@@ -2023,21 +2023,11 @@ function dismissLostBanner(e){
   document.getElementById('lost-banner').classList.remove('visible');
 }
 function updateLostBanner(){
-  if(lostBannerDismissed)return;
-  const hasLost=cats.some(c=>c.lost);
-  document.getElementById('lost-banner').classList.toggle('visible',hasLost);
+  // Lost banner removed — function kept for compatibility
 }
 // Check if user location is outside all lost cat territories
 function checkLostBannerVisibility(lat,lng){
-  if(lostBannerDismissed)return;
-  const lostCats=cats.filter(c=>c.lost);
-  if(!lostCats.length){document.getElementById('lost-banner').classList.remove('visible');return;}
-  // Show banner if within 1km of any lost cat, hide if outside all territories
-  const nearLost=lostCats.some(c=>gd(lat,lng,c.lat,c.lng)<0.009); // ~1km
-  if(!nearLost){
-    lostBannerDismissed=true;
-    document.getElementById('lost-banner').classList.remove('visible');
-  }
+  // Lost banner removed — function kept for compatibility
 }
 
 // SPOT PIN MARKER
