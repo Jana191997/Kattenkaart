@@ -22,9 +22,12 @@
 :root{--cream:#f5f0e8;--warm-white:#faf8f4;--terracotta:#c0623a;--terracotta-light:#d97d56;--forest:#3a5e4e;--forest-light:#4d7a65;--charcoal:#2c2c2c;--mid:#6b6560;--border:#ddd6cc;--shadow:0 4px 20px rgba(0,0,0,0.1);--shadow-lg:0 8px 40px rgba(0,0,0,0.15);--lost:#b03030;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh;}
-header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,0.2);}
-.logo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;}
-.logo span{color:#d97d56;}
+header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:1000;box-shadow:0 2px 16px rgba(50,16,48,0.25);}
+.logo-wrap{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.header-logo{height:44px;width:44px;object-fit:contain;border-radius:8px;background:var(--cream);padding:3px;flex-shrink:0;}
+.logo-text{display:flex;flex-direction:column;line-height:1.1;}
+.logo-main{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--cream);}
+.logo-sub{font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(245,237,232,0.65);}
 .header-right{display:flex;align-items:center;gap:8px;}
 .user-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.13);border-radius:20px;padding:5px 11px 5px 7px;cursor:pointer;font-size:0.8rem;font-weight:700;}
 .user-avatar{width:24px;height:24px;background:var(--terracotta);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;}
@@ -36,6 +39,27 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--charcoal);}.btn-outline:hover{border-color:var(--terracotta);color:var(--terracotta);}
 .btn-sm{padding:5px 10px;font-size:0.73rem;}.btn-full{width:100%;margin-top:8px;padding:10px;font-size:0.86rem;}
 .app{display:grid;grid-template-columns:355px 1fr;height:calc(100vh - 58px);}
+/* Mobile layout */
+@media(max-width:700px){
+  header{padding:0 10px;height:52px;}
+  
+  .logo{font-size:1.1rem;}
+  .btn{padding:6px 10px;font-size:0.72rem;}
+  .header-right{gap:5px;}
+  .app{grid-template-columns:1fr;grid-template-rows:1fr;height:calc(100vh - 56px);position:relative;}
+  .sidebar{position:absolute;bottom:0;left:0;right:0;z-index:600;height:auto;
+    border-right:none;border-top:1px solid var(--border);border-radius:16px 16px 0 0;
+    box-shadow:0 -4px 20px rgba(0,0,0,0.12);max-height:55vh;transition:transform 0.3s ease;}
+  .sidebar.collapsed{transform:translateY(calc(100% - 48px));}
+  .sidebar-tabs{border-radius:16px 16px 0 0;cursor:pointer;}
+  .sidebar-drag-handle{width:36px;height:4px;background:var(--border);border-radius:2px;
+    margin:8px auto 0;display:block;}
+  .map-container{height:100%;width:100%;}
+  #map{height:100% !important;}
+  .cat-detail{max-height:60vh;border-radius:16px 16px 0 0;}
+  .nearby-panel{width:calc(100vw - 24px);right:12px;top:auto;bottom:60px;}
+  .modal{max-height:95vh;}
+}
 .sidebar{background:var(--warm-white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
 .sidebar-tabs{display:flex;border-bottom:1px solid var(--border);}
 .tab-btn{flex:1;padding:11px 3px;background:none;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--mid);border-bottom:3px solid transparent;transition:all 0.2s;}
@@ -176,9 +200,10 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .photo-add-btn{width:100%;height:70px;border:2px dashed var(--border);border-radius:7px;background:var(--cream);
   display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.4rem;transition:all 0.2s;color:var(--mid);}
 .photo-add-btn:hover{border-color:var(--terracotta);color:var(--terracotta);}
-.cat-main-photo{width:100%;height:200px;object-fit:cover;border-radius:10px;margin-bottom:8px;cursor:pointer;}
-.cat-main-photo-placeholder{width:100%;height:180px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+.cat-main-photo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;margin-bottom:8px;cursor:pointer;display:block;}
+.cat-main-photo-placeholder{width:100%;aspect-ratio:1/1;background:linear-gradient(135deg,#c8b8a2,#a89880);
   border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:4rem;margin-bottom:8px;}
+.photo-gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:pointer;}
 .cluster-badge{position:absolute;top:-4px;right:-4px;background:var(--terracotta);color:white;
   border-radius:50%;width:18px;height:18px;font-size:0.65rem;font-weight:700;
   display:flex;align-items:center;justify-content:center;border:2px solid white;}
@@ -186,7 +211,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 </head>
 <body>
 <header>
-  <div class="logo">Katten<span>Kaart</span> Oudenaarde</div>
+    <div class="logo">Katten<span>Kaart</span> Oudenaarde</div>
   <div class="header-right">
     <div class="user-pill" id="user-pill" onclick="toggleUserMenu(event)">
       <div class="user-avatar" id="header-avatar">👤</div>
@@ -199,8 +224,9 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 </header>
 
 <div class="app">
-  <div class="sidebar">
-    <div class="sidebar-tabs">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-drag-handle" onclick="toggleSidebar()" id="drag-handle"></div>
+    <div class="sidebar-tabs" onclick="expandSidebar()">
       <button class="tab-btn active" onclick="switchTab('cats')">🐱 Katten</button>
       <button class="tab-btn" onclick="switchTab('sightings')">📍 Gespot</button>
       <button class="tab-btn" onclick="switchTab('pending')">⏳ <span id="pending-badge"></span>Pending</button>
@@ -658,15 +684,20 @@ function renderAlerts(){
   const el=document.getElementById('alerts-list');
   const lostAlerts=cats.filter(c=>c.lost).map(c=>({
     id:'la-'+c.id,title:`🚨 ${c.name} is vermist!`,
-    body:`${c.name} (${c.breed}) vermist bij ${c.address}. Heb je hem/haar gezien?`,
+    body:`${c.name} (${c.breed}) vermist in de buurt van ${c.address.split(',')[0]}. Heb je hem/haar gezien?`,
     time:new Date().toISOString(),unread:true,type:'lost',catId:c.id
   }));
   const all=[...lostAlerts,...notifs].slice(0,25);
   if(!all.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">🔔</div>Geen meldingen.</div>`;return;}
   el.innerHTML=all.map(n=>`<div class="notif-item${n.unread?' unread':''}">
-    <div class="notif-title">${n.title}</div>
+    <div class="notif-title" ${n.catId?`onclick="switchTab('cats');showDetail('${n.catId}')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px"`:''}>
+      ${n.title}
+    </div>
     <div style="font-size:0.77rem;margin-top:2px">${n.body}</div>
-    ${n.type==='lost'?`<button class="btn btn-primary btn-sm" style="margin-top:7px" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${n.catId}'">🐾 Ik heb deze kat gezien!</button>`:''}
+    ${n.type==='lost'?`<div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="switchTab('cats');showDetail('${n.catId}')">📋 Bekijk profiel</button>
+      <button class="btn btn-sm" style="background:rgba(192,98,58,0.12);color:var(--terracotta)" onclick="openModal('spot-modal');document.getElementById('sp-cat').value='${n.catId}'">🐾 Ik heb deze kat gezien!</button>
+    </div>`:''}
     <div style="font-size:0.68rem;color:var(--mid);margin-top:4px">${fmt(n.time)}</div>
   </div>`).join('');
 }
@@ -696,20 +727,26 @@ function showDetail(catId){
   const owner=users.find(u=>u.id===cat.owner);
   // Only show address and owner to the owner themselves
   const metaParts=[cat.breed];
-  if(isOwn){metaParts.push(cat.address);metaParts.push(`Eigenaar: ${owner?owner.name:'Onbekend'}`);}
+  if(isOwn){
+    const streetOnly=cat.address.split(',')[0];
+    metaParts.push(streetOnly);
+  }
   document.getElementById('detail-meta').textContent=metaParts.join(' · ');
   // Main photo + gallery
   const photoHtml=cat.photo
     ?`<img src="${cat.photo}" class="cat-main-photo" data-fs="${cat.photo}" onclick="openPhotoFullscreen(this.dataset.fs)">`
     :`<div class="cat-main-photo-placeholder">${breedEmoji(cat.breed)}</div>`;
-  const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
+  const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:pointer" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
   const galleryHtml=extraHtml?`<div class="photo-gallery">${extraHtml}</div>`:'';
   document.getElementById('detail-photo').innerHTML='';
   document.getElementById('detail-photo').style.display='none';
-  // Insert photos before bio
+  // Remove any previously inserted photo wraps to prevent duplication
   const bioEl=document.getElementById('detail-bio');
+  const detailRow=document.getElementById('detail-bio').parentElement;
+  detailRow.querySelectorAll('.detail-photo-wrap').forEach(el=>el.remove());
   bioEl.innerHTML='';
   const photoWrap=document.createElement('div');
+  photoWrap.className='detail-photo-wrap';
   photoWrap.innerHTML=photoHtml+galleryHtml;
   bioEl.parentElement.insertBefore(photoWrap,bioEl);
   bioEl.textContent=cat.bio;
@@ -1338,6 +1375,28 @@ async function confirmDeleteSighting(id){
     });
 }
 
+// MOBILE SIDEBAR TOGGLE
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+}
+function expandSidebar(){
+  const sb=document.getElementById('sidebar');
+  if(sb.classList.contains('collapsed'))sb.classList.remove('collapsed');
+}
+// Auto-collapse sidebar on mobile after tab switch
+const origSwitchTab=switchTab;
+function switchTab(tab){
+  origSwitchTab(tab);
+  if(window.innerWidth<=700)expandSidebar();
+}
+// Start collapsed on mobile
+if(window.innerWidth<=700){
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('sidebar')?.classList.add('collapsed');
+  });
+}
+
 // EXTRA PHOTOS
 let currentExtraPhotos=[];
 function addExtraPhotos(input){
@@ -1361,7 +1420,7 @@ function renderExtraPhotosPrev(){
   if(!el)return;
   let html=currentExtraPhotos.map((src,i)=>
     `<div style="position:relative;">
-      <img src="${src}" style="width:100%;height:70px;object-fit:cover;border-radius:7px;">
+      <img src="${src}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:7px;">
       <button onclick="removeExtraPhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>`).join('');
   if(currentExtraPhotos.length<3)html+=`<div class="photo-add-btn" onclick="document.getElementById('f-extra-photos').click()">+</div>`;
