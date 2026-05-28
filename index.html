@@ -240,8 +240,8 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
     <div class="sidebar-tabs" onclick="expandSidebar()">
       <button class="tab-btn active" onclick="switchTab('cats')">🐱 Katten</button>
       <button class="tab-btn" onclick="switchTab('sightings')">📍 Gespot</button>
-      <button class="tab-btn" onclick="switchTab('pending')">⏳ <span id="pending-badge"></span>Pending</button>
-      <button class="tab-btn" onclick="switchTab('alerts')">🔔 <span id="alert-badge"></span>Alerts</button>
+      <button class="tab-btn" onclick="switchTab('pending')">✅ <span id="pending-badge"></span>Bevestigen</button>
+      <button class="tab-btn" onclick="switchTab('alerts')">🔔 <span id="alert-badge"></span>Meldingen</button>
     </div>
     <div id="tab-cats" class="tab-content active">
       <div><div class="section-title">Katten in de buurt</div><div class="section-sub">Gebruik GPS of klik op de kaart — katten binnen 500m verschijnen hier.</div></div>
@@ -252,7 +252,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <div id="sightings-list"></div>
     </div>
     <div id="tab-pending" class="tab-content">
-      <div><div class="section-title">Wacht op bevestiging</div><div class="section-sub">Bevestig spottings van jouw katten.</div></div>
+      <div><div class="section-title">Te bevestigen</div><div class="section-sub">Bevestig spottings van jouw katten.</div></div>
       <div id="pending-list"></div>
     </div>
     <div id="tab-alerts" class="tab-content">
