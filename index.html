@@ -184,7 +184,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .toast{position:fixed;top:70px;right:14px;background:var(--forest);color:white;padding:10px 16px;border-radius:8px;font-size:0.81rem;font-weight:700;z-index:3000;box-shadow:var(--shadow);transform:translateX(130%);transition:transform 0.3s ease;max-width:270px;}
 .toast.show{transform:translateX(0);}.toast.error{background:var(--lost);}
 @keyframes lostpulse{0%,100%{opacity:1}50%{opacity:0.55}}
-.lost-pulse{animation:lostpulse 1.6s infinite;}
+.{animation:lostpulse 1.6s infinite;}
 .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:4000;align-items:center;justify-content:center;padding:20px;}
 .confirm-overlay.open{display:flex;}
 .confirm-box{background:var(--warm-white);border-radius:14px;width:100%;max-width:360px;padding:24px;box-shadow:var(--shadow-lg);text-align:center;}
@@ -825,7 +825,7 @@ function catCardHtml(cat, isOwn){
     <div class="cat-card-inner">
       <div class="cat-card-thumb">${cat.photo?`<img src="${cat.photo}" style="object-position:${cat.thumbPos||'center top'}">`:(cat.emoji||breedEmoji(cat.breed))}</div>
       <div class="cat-card-body">
-        <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost lost-pulse">🚨 Vermist</span>':''}</div>
+        <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost ">🚨 Vermist</span>':''}</div>
         <div class="cat-meta">${cat.breed}${cat.birthdate&&calcAge(cat.birthdate)?' · '+calcAge(cat.birthdate):''}</div>
         <div class="cat-bio">${cat.bio.substring(0,60)}${cat.bio.length>60?'…':''}</div>
         <span class="tag tag-territory">📍 ${n} spot${n!==1?'s':''}</span>
@@ -1360,7 +1360,7 @@ async function saveCat(){
     const cat=cats.find(c=>c.id===editCatId);
     Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:me.email||'',
       photo:mainPhotoUrl||cat.photo,thumbPos:currentThumbPos,birthdate,addrOk,extraPhotos,
-      lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:breedEmoji(breed||cat.breed)});
+      lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:currentEmoji});
     const {error:updateErr}=await sb.from('cats').update({
       name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
