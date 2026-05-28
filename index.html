@@ -70,12 +70,20 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .cat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
 .cat-card.selected{border-color:var(--terracotta);box-shadow:0 0 0 2px rgba(192,98,58,0.2);}
 .cat-card.lost-card{border-color:var(--lost);}
-.cat-card-inner{display:flex;gap:0;align-items:stretch;}
-.cat-card-thumb{width:80px;min-width:80px;height:80px;background:linear-gradient(135deg,#c8b8a2,#a89880);
-  display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0;}
+.cat-card-inner{display:flex;gap:0;align-items:stretch;min-height:80px;}
+.cat-card-thumb{width:90px;min-width:90px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+  display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0;
+  align-self:stretch;}
+.cat-card-thumb img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
 .cat-card-body{padding:9px 11px;flex:1;min-width:0;}
 .section-label{font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
   color:var(--mid);padding:4px 2px 2px;}
+.thumb-opt{cursor:pointer;text-align:center;flex:1;}
+.thumb-opt-preview{width:100%;height:60px;background:linear-gradient(135deg,#c8b8a2,#a89880);
+  border-radius:7px;border:2px solid var(--border);overflow:hidden;background-size:cover;
+  background-position:center top;transition:border-color 0.2s;}
+.thumb-opt.selected .thumb-opt-preview{border-color:var(--terracotta);}
+.thumb-opt-label{font-size:0.7rem;color:var(--mid);margin-top:3px;font-weight:700;}
 .cat-name{font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:700;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .cat-meta{font-size:0.73rem;color:var(--mid);margin-top:2px;}
 .cat-bio{font-size:0.78rem;margin-top:4px;line-height:1.45;}
@@ -361,11 +369,28 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
         <div class="form-group">
           <label class="form-label">Foto</label>
           <div class="file-upload" onclick="document.getElementById('f-photo').click()">
-            <input type="file" id="f-photo" accept="image/*" onchange="prevImg(this,'f-prev')">
+            <input type="file" id="f-photo" accept="image/*" onchange="prevImg(this,'f-prev');showThumbPicker()">
             <div class="file-upload-icon">📷</div>
             <div class="file-upload-text">Klik om foto te uploaden</div>
           </div>
           <img id="f-prev" class="preview-img" style="display:none">
+          <div id="thumb-picker" style="display:none;margin-top:8px;">
+            <label class="form-label">Uitsnede thumbnail</label>
+            <div style="display:flex;gap:6px;margin-top:4px;" id="thumb-options">
+              <div class="thumb-opt selected" data-pos="center top" onclick="selectThumbPos(this)">
+                <div class="thumb-opt-preview" style="object-position:center top" id="tp-top"></div>
+                <div class="thumb-opt-label">Hoofd</div>
+              </div>
+              <div class="thumb-opt" data-pos="center center" onclick="selectThumbPos(this)">
+                <div class="thumb-opt-preview" id="tp-mid"></div>
+                <div class="thumb-opt-label">Midden</div>
+              </div>
+              <div class="thumb-opt" data-pos="center bottom" onclick="selectThumbPos(this)">
+                <div class="thumb-opt-preview" id="tp-bot"></div>
+                <div class="thumb-opt-label">Onder</div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="info-box" style="margin-bottom:8px;">📬 Meldingen worden verstuurd naar het e-mailadres van jouw account.</div>
         <hr class="divider">
@@ -659,7 +684,7 @@ function catCardHtml(cat, isOwn){
   return`<div class="cat-card${selectedCat===cat.id?' selected':''}${cat.lost?' lost-card':''}" onclick="showDetail('${cat.id}')">
     ${isOwn?'<span class="tag tag-own">Mijn kat</span>':''}
     <div class="cat-card-inner">
-      <div class="cat-card-thumb">${cat.photo?`<img src="${cat.photo}" style="width:100%;height:100%;object-fit:cover;object-position:center top;">`:(cat.emoji||breedEmoji(cat.breed))}</div>
+      <div class="cat-card-thumb">${cat.photo?`<img src="${cat.photo}" style="object-position:${cat.thumbPos||'center top'}">`:(cat.emoji||breedEmoji(cat.breed))}</div>
       <div class="cat-card-body">
         <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost lost-pulse">🚨 Vermist</span>':''}</div>
         <div class="cat-meta">${cat.breed}</div>
@@ -1154,6 +1179,11 @@ function openEditCat(catId){
   const el=document.getElementById('addr-st');
   el.textContent=cat.addrOk?'✓ Eerder geverifieerd':'';el.className='addr-status'+(cat.addrOk?' addr-ok':'');
   loadExtraPhotosForEdit(cat);
+  currentThumbPos=cat.thumbPos||'center top';
+  // Pre-select correct thumb option
+  document.querySelectorAll('.thumb-opt').forEach(o=>{
+    o.classList.toggle('selected',o.dataset.pos===currentThumbPos);
+  });
   openModal('add-cat-modal');
 }
 
@@ -1184,25 +1214,25 @@ async function saveCat(){
   if(editCatId){
     const cat=cats.find(c=>c.id===editCatId);
     Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:me.email||'',
-      photo:mainPhotoUrl||cat.photo,addrOk,extraPhotos,
+      photo:mainPhotoUrl||cat.photo,thumbPos:currentThumbPos,addrOk,extraPhotos,
       lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:breedEmoji(breed||cat.breed)});
     await sb.from('cats').update({
       name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
-      emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos)
+      emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos
     }).eq('id',cat.id);
     toast(`${name} bijgewerkt!`);
   }else{
     const lat=verLat||(OUD[0]+(Math.random()-.5)*.01);
     const lng=verLng||(OUD[1]+(Math.random()-.5)*.01);
     const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email,
-      owner:me.id,photo:mainPhotoUrl||null,
+      owner:me.id,photo:mainPhotoUrl||null,thumbPos:currentThumbPos,
       emoji:breedEmoji(breed),extraPhotos,lat,lng,lost:false,addrOk};
     cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
     await sb.from('cats').insert({
       id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
-      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos)
+      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos
     });
     toast(`${name} toegevoegd! 🐱`);
   }
@@ -1304,7 +1334,7 @@ function prevImg(input,prevId){
   }
 }
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
-function clearCatForm(){['f-name','f-addr','f-breed','f-bio'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;renderExtraPhotosPrev();}
+function clearCatForm(){['f-name','f-addr','f-breed','f-bio'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
 function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;pendingSpotPhoto=null;}
 function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
 
@@ -1326,6 +1356,7 @@ async function loadFromSupabase(){
       id:r.id,name:r.name,address:r.address,breed:r.breed,bio:r.bio,
       email:r.email||'',owner:r.owner_id,photo:r.photo,
       emoji:r.emoji||breedEmoji(r.breed),
+      thumbPos:r.thumb_pos||'center top',
       extraPhotos:r.extra_photos?JSON.parse(r.extra_photos):[],
       lat:r.lat,lng:r.lng,lost:r.lost,addrOk:r.addr_ok
     }));
@@ -1561,6 +1592,33 @@ async function confirmDeleteSighting(id){
       renderAll();if(selectedCat)renderTerr(selectedCat);
       toast('Spotting verwijderd.');
     });
+}
+
+// THUMBNAIL POSITION
+let currentThumbPos='center top';
+
+function showThumbPicker(){
+  const prev=document.getElementById('f-prev');
+  const picker=document.getElementById('thumb-picker');
+  if(prev.style.display==='none'){picker.style.display='none';return;}
+  picker.style.display='block';
+  // Update all preview divs with the current photo
+  ['tp-top','tp-mid','tp-bot'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&prev.src){
+      el.style.backgroundImage=`url('${prev.src}')`;
+      el.style.backgroundSize='cover';
+    }
+  });
+  document.getElementById('tp-top').style.backgroundPosition='center top';
+  document.getElementById('tp-mid').style.backgroundPosition='center center';
+  document.getElementById('tp-bot').style.backgroundPosition='center bottom';
+}
+
+function selectThumbPos(el){
+  document.querySelectorAll('.thumb-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  currentThumbPos=el.dataset.pos;
 }
 
 // SUPABASE STORAGE UPLOAD (with base64 fallback)
