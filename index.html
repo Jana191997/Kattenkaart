@@ -701,8 +701,13 @@ function renderCatsList(){
 
 function renderSightList(){
   const el=document.getElementById('sightings-list');
-  const c=sightings.filter(s=>s.status==='confirmed');
-  if(!c.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">📍</div>Nog geen bevestigde spottings.</div>`;return;}
+  if(!me){
+    el.innerHTML=`<div class="empty-state"><div class="big-icon">🔐</div>Log in om de spottings van jouw katten te zien.</div>`;
+    return;
+  }
+  const myCatIds=cats.filter(c=>c.owner===me.id).map(c=>c.id);
+  const c=sightings.filter(s=>s.status==='confirmed'&&myCatIds.includes(s.catId));
+  if(!c.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">📍</div>Nog geen bevestigde spottings van jouw katten.</div>`;return;}
   el.innerHTML=c.map(s=>{
     const cat=cats.find(c=>c.id===s.catId);
     return`<div class="sighting-card">
@@ -710,7 +715,10 @@ function renderSightList(){
       <div style="color:var(--mid)">📍 ${s.location}</div>
       ${s.notes?`<div style="font-size:0.75rem;color:var(--mid);margin-top:2px;font-style:italic">"${s.notes}"</div>`:''}
       ${s.photo?`<img src="${s.photo}" class="sighting-photo">`:''}
-      ${(me&&cat&&cat.owner===me.id)?`<div class="sighting-actions"><button class="btn btn-sm" style="background:#fef3cd;color:#856404" onclick="undoConfirmS('${s.id}')">↩ Ongedaan maken</button><button class="btn btn-sm" style="background:#fde8e8;color:#9b2020" onclick="confirmDeleteSighting('${s.id}')">🗑️ Verwijderen</button></div>`:''}
+      <div class="sighting-actions">
+        <button class="btn btn-sm" style="background:#fef3cd;color:#856404" onclick="undoConfirmS('${s.id}')">↩ Ongedaan maken</button>
+        <button class="btn btn-sm" style="background:#fde8e8;color:#9b2020" onclick="confirmDeleteSighting('${s.id}')">🗑️ Verwijderen</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -757,7 +765,12 @@ function renderAlerts(){
   const el=document.getElementById('alerts-list');
   const lostAlerts=cats.filter(c=>c.lost).map(c=>({
     id:'la-'+c.id,title:`🚨 ${c.name} is vermist!`,
-    body:`${c.name} (${c.breed}) vermist in de buurt van ${c.address.split(',')[0]}. Heb je hem/haar gezien?`,
+    body:(()=>{
+      const parts=c.address.split(',');
+      const street=parts[0]||'';
+      const city=parts[1]?parts[1].trim().replace(/\d{4}/,'').trim():'';
+      return `${c.name} (${c.breed}) vermist${street?' in de buurt van '+street:''}${city?' ('+city+')':''}. Heb je hem/haar gezien?`;
+    })(),
     time:new Date().toISOString(),unread:true,type:'lost',catId:c.id
   }));
   const all=[...lostAlerts,...notifs].slice(0,25);
@@ -855,7 +868,13 @@ async function doMarkLost(){
   await sb.from('cats').update({lost:true}).eq('id',lostCatId);
   const msg=document.getElementById('lost-msg').value;
   notifs.unshift({id:'n'+Date.now(),title:`🚨 ${cat.name} is vermist!`,
-    body:`${cat.name} (${cat.breed}) vermist bij ${cat.address}. ${msg}`.trim(),
+    body:(()=>{
+      const parts=cat.address.split(',');
+      const street=parts[0]||'';
+      const city=parts[1]?parts[1].trim().replace(/\d{4}/,'').trim():'';
+      const loc=street+(city?' ('+city+')':'');
+      return `${cat.name} (${cat.breed}) vermist${loc?' bij '+loc:''}. ${msg}`.trim();
+    })(),
     time:new Date().toISOString(),unread:true,type:'lost',catId:cat.id});
   closeModal('lost-modal');document.getElementById('lost-msg').value='';
   renderAll();showDetail(lostCatId);toast(`🚨 Vermeldingsmelding voor ${cat.name} verstuurd!`);switchTab('alerts');
