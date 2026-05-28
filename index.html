@@ -363,6 +363,11 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
           <input class="form-input" id="f-breed" placeholder="bv. Oranje tabby, pluizige staart">
         </div>
         <div class="form-group">
+          <label class="form-label">Geboortedatum <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(optioneel)</span></label>
+          <input class="form-input" id="f-birthdate" type="date" oninput="const a=calcAge(this.value);document.getElementById('f-age-preview').textContent=a?'🎂 Leeftijd: '+a:''">
+          <div id="f-age-preview" style="font-size:0.75rem;color:var(--mid);margin-top:3px;"></div>
+        </div>
+        <div class="form-group">
           <label class="form-label">Bio</label>
           <textarea class="form-textarea" id="f-bio" placeholder="Persoonlijkheid, gewoontes, favoriete plekken..."></textarea>
         </div>
@@ -687,7 +692,7 @@ function catCardHtml(cat, isOwn){
       <div class="cat-card-thumb">${cat.photo?`<img src="${cat.photo}" style="object-position:${cat.thumbPos||'center top'}">`:(cat.emoji||breedEmoji(cat.breed))}</div>
       <div class="cat-card-body">
         <div class="cat-name">${cat.name}${cat.lost?'<span class="tag tag-lost lost-pulse">🚨 Vermist</span>':''}</div>
-        <div class="cat-meta">${cat.breed}</div>
+        <div class="cat-meta">${cat.breed}${cat.birthdate&&calcAge(cat.birthdate)?' · '+calcAge(cat.birthdate):''}</div>
         <div class="cat-bio">${cat.bio.substring(0,60)}${cat.bio.length>60?'…':''}</div>
         <span class="tag tag-territory">📍 ${n} spot${n!==1?'s':''}</span>
       </div>
@@ -871,6 +876,7 @@ function showDetail(catId){
   const owner=users.find(u=>u.id===cat.owner);
   // Only show address and owner to the owner themselves
   const metaParts=[cat.breed];
+  if(cat.birthdate){const age=calcAge(cat.birthdate);if(age)metaParts.push(age);}
   if(isOwn){
     const streetOnly=cat.address.split(',')[0];
     metaParts.push(streetOnly);
@@ -1174,6 +1180,9 @@ function openEditCat(catId){
   document.getElementById('f-addr').value=cat.address;
   document.getElementById('f-breed').value=cat.breed;
   document.getElementById('f-bio').value=cat.bio;
+  document.getElementById('f-birthdate').value=cat.birthdate||'';
+  const agePreview=document.getElementById('f-age-preview');
+  if(agePreview)agePreview.textContent=cat.birthdate?'🎂 Leeftijd: '+calcAge(cat.birthdate):'';
   const p=document.getElementById('f-prev');
   if(cat.photo){p.src=cat.photo;p.style.display='block';}
   const el=document.getElementById('addr-st');
@@ -1194,6 +1203,7 @@ async function saveCat(){
   const breed=document.getElementById('f-breed').value.trim();
   const bio=document.getElementById('f-bio').value.trim();
   const email=me.email||''; // use account email
+  const birthdate=document.getElementById('f-birthdate').value||null;
   if(!name||!addr){toast('Vul naam en adres in.',true);return;}
   // Upload photos (Storage or base64 fallback)
   let mainPhotoUrl=editCatId?cats.find(c=>c.id===editCatId)?.photo:null;
@@ -1214,25 +1224,25 @@ async function saveCat(){
   if(editCatId){
     const cat=cats.find(c=>c.id===editCatId);
     Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:me.email||'',
-      photo:mainPhotoUrl||cat.photo,thumbPos:currentThumbPos,addrOk,extraPhotos,
+      photo:mainPhotoUrl||cat.photo,thumbPos:currentThumbPos,birthdate,addrOk,extraPhotos,
       lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:breedEmoji(breed||cat.breed)});
     await sb.from('cats').update({
       name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
-      emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos
+      emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
     }).eq('id',cat.id);
     toast(`${name} bijgewerkt!`);
   }else{
     const lat=verLat||(OUD[0]+(Math.random()-.5)*.01);
     const lng=verLng||(OUD[1]+(Math.random()-.5)*.01);
     const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email,
-      owner:me.id,photo:mainPhotoUrl||null,thumbPos:currentThumbPos,
+      owner:me.id,photo:mainPhotoUrl||null,thumbPos:currentThumbPos,birthdate,
       emoji:breedEmoji(breed),extraPhotos,lat,lng,lost:false,addrOk};
     cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
     await sb.from('cats').insert({
       id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
       owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
-      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos
+      lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
     });
     toast(`${name} toegevoegd! 🐱`);
   }
@@ -1334,7 +1344,7 @@ function prevImg(input,prevId){
   }
 }
 function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='toast'+(err?' error':'');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3600);}
-function clearCatForm(){['f-name','f-addr','f-breed','f-bio'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
+function clearCatForm(){['f-name','f-addr','f-breed','f-bio','f-birthdate'].forEach(id=>document.getElementById(id).value='');const p=document.getElementById('f-prev');p.src='';p.style.display='none';document.getElementById('addr-st').textContent='';document.getElementById('f-addr').dataset.manualOk='';verLat=null;verLng=null;addrResults=[];hideDrop();currentExtraPhotos=[];pendingExtraPhotos=[];pendingMainPhoto=null;currentThumbPos='center top';renderExtraPhotosPrev();document.getElementById('thumb-picker').style.display='none';}
 function clearSpotForm(){document.getElementById('sp-cat').value='';document.getElementById('sp-loc').value='';document.getElementById('sp-notes').value='';document.getElementById('sp-coords').textContent='';document.getElementById('matcher-area').style.display='none';const p=document.getElementById('sp-prev');p.src='';p.style.display='none';pickedLat=null;pickedLng=null;pendingSpotPhoto=null;}
 function fmt(t){if(!t)return'';try{return new Date(t).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return t;}}
 
@@ -1357,6 +1367,7 @@ async function loadFromSupabase(){
       email:r.email||'',owner:r.owner_id,photo:r.photo,
       emoji:r.emoji||breedEmoji(r.breed),
       thumbPos:r.thumb_pos||'center top',
+      birthdate:r.birthdate||null,
       extraPhotos:r.extra_photos?JSON.parse(r.extra_photos):[],
       lat:r.lat,lng:r.lng,lost:r.lost,addrOk:r.addr_ok
     }));
@@ -1592,6 +1603,20 @@ async function confirmDeleteSighting(id){
       renderAll();if(selectedCat)renderTerr(selectedCat);
       toast('Spotting verwijderd.');
     });
+}
+
+// AGE CALCULATION
+function calcAge(birthdate){
+  if(!birthdate)return null;
+  const birth=new Date(birthdate);
+  const now=new Date();
+  const months=(now.getFullYear()-birth.getFullYear())*12+(now.getMonth()-birth.getMonth());
+  if(months<1)return'Minder dan 1 maand';
+  if(months<12)return`${months} maand${months!==1?'en':''}`;
+  const years=Math.floor(months/12);
+  const rem=months%12;
+  if(rem===0)return`${years} jaar`;
+  return`${years} jaar en ${rem} maand${rem!==1?'en':''}`;
 }
 
 // THUMBNAIL POSITION
