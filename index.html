@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KattenKaart Oudenaarde</title>
+<title>KattenKaart België</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3a5e4e">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -211,7 +211,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 </head>
 <body>
 <header>
-    <div class="logo">Katten<span>Kaart</span> Oudenaarde</div>
+    <div class="logo">Katten<span>Kaart</span> België</div>
   <div class="header-right">
     <div class="user-pill" id="user-pill" onclick="toggleUserMenu(event)">
       <div class="user-avatar" id="header-avatar">👤</div>
@@ -497,7 +497,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 </div>
 
 <script>
-const OUD=[50.8477,3.6069];
+const OUD=[50.5010,4.4764]; // centrum België
 let me=null, editCatId=null, pickingLoc=false, pickedLat=null, pickedLng=null;
 let verLat=null, verLng=null, addrTimer=null;
 let currentLat=null, currentLng=null; // user's current location for nearby filtering
@@ -511,14 +511,46 @@ let users=[];
 let cats=[];
 let sightings=[];
 let notifs=[
-  {id:'n0',title:'Welkom bij KattenKaart!',body:'Registreer je katten en help ze thuis te vinden.',time:new Date().toISOString(),unread:true,type:'info'}
+  {id:'n0',title:'Welkom bij KattenKaart!',body:'Registreer je katten en help ze thuis te vinden — door heel België!',time:new Date().toISOString(),unread:true,type:'info'}
 ];
 
 // MAP
 function initMap(){
-  map=L.map('map').setView(OUD,15);
+  map=L.map('map').setView(OUD,13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
-  map.on('click',onMapClick);renderAll();
+  map.on('click',onMapClick);
+  // Auto-center on user's location if GPS available
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        const lat=pos.coords.latitude, lng=pos.coords.longitude;
+        map.setView([lat,lng],15);
+        currentLat=lat; currentLng=lng;
+        placeGPSDot(lat,lng);
+        renderCatsList();
+      },
+      ()=>{}  // silently fail
+      ,{timeout:5000}
+    );
+  }
+  renderAll();
+}
+
+function centerOnOwnCats(){
+  if(!me)return;
+  const myCats=cats.filter(c=>c.owner===me.id);
+  if(!myCats.length)return;
+  if(myCats.length===1){
+    map.setView([myCats[0].lat,myCats[0].lng],16);
+    currentLat=myCats[0].lat; currentLng=myCats[0].lng;
+  } else {
+    // Fit map to show all own cats
+    const bounds=L.latLngBounds(myCats.map(c=>[c.lat,c.lng]));
+    map.fitBounds(bounds,{padding:[40,40],maxZoom:16});
+    const center=bounds.getCenter();
+    currentLat=center.lat; currentLng=center.lng;
+  }
+  renderCatsList();
 }
 
 function onMapClick(e){
@@ -978,7 +1010,7 @@ async function fetchAddrSuggestions(q){
       const city=(a.city||a.town||a.village||a.municipality||a.suburb||'');
       const street=a.road||a.pedestrian||a.footway||'';
       const num=a.house_number||'';
-      const isLocal=LOCAL_CITIES.some(c=>city.toLowerCase().includes(c));
+      const isLocal=true; // accept all Belgian addresses
       const parts=[street+(num?' '+num:''),city,a.postcode].filter(Boolean);
       const short=parts.join(', ');
       return{short,full:d.display_name,lat:parseFloat(d.lat),lng:parseFloat(d.lon),isLocal,city,street};
@@ -1019,7 +1051,7 @@ function showDrop(){
     <div class="addr-option" id="addr-opt-${i}" onclick="selectAddr(${i})" onmouseover="addrFocusIdx=${i};highlightDrop()">
       <div class="addr-option-main">${r.short||r.full.split(',')[0]}</div>
       <div class="addr-option-sub">${r.full.split(',').slice(1,3).join(',').trim()}</div>
-      <span class="addr-option-badge ${r.isLocal?'addr-badge-local':'addr-badge-other'}">${r.isLocal?'✓ Regio Oudenaarde':'België'}</span>
+      <span class="addr-option-badge addr-badge-local">✓ België</span>
     </div>`).join('');
   dd.classList.add('open');
 }
@@ -1045,13 +1077,8 @@ function selectAddr(i){
   verLat=r.lat;verLng=r.lng;
   hideDrop();
   const el=document.getElementById('addr-st');
-  if(r.isLocal){
-    el.className='addr-status addr-ok';
-    el.textContent=`✓ Gevonden: ${r.full.split(',').slice(0,3).join(', ')}`;
-  }else{
-    el.className='addr-status addr-err';
-    el.textContent=`⚠️ Adres buiten regio Oudenaarde — controleer of dit klopt.`;
-  }
+  el.className='addr-status addr-ok';
+  el.textContent=`✓ Gevonden: ${r.full.split(',').slice(0,3).join(', ')}`;
 }
 
 // Close dropdown when clicking outside
@@ -1161,6 +1188,8 @@ function setMe(u, silent=false){
   // Sessie opslaan zodat je ingelogd blijft na refresh
   try{localStorage.setItem('kk_session', JSON.stringify({id:u.id,name:u.name,pin:u.pin}));}catch(e){}
   renderAll();
+  // Center map on own cats after a short delay (map needs to be ready)
+  setTimeout(()=>centerOnOwnCats(), 300);
   if(!silent)toast(`Welkom, ${u.name}! 👋`);
 }
 function toRegister(){document.getElementById('login-area').style.display='none';document.getElementById('register-area').style.display='block';}
