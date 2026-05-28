@@ -1246,7 +1246,7 @@ async function undoConfirmS(id){
   const s=sightings.find(x=>x.id===id);if(!s)return;
   showConfirm('↩','Spotting terugzetten?',
     'De spotting wordt teruggezet naar "in behandeling" en het territorium wordt aangepast.',
-    'Ja, terugzetten','btn-outline btn-forest',()=>{
+    'Ja, terugzetten','btn-outline btn-forest',async()=>{
       s.status='pending';
       await sb.from('sightings').update({status:'pending'}).eq('id',id);
       renderAll();if(selectedCat===s.catId)renderTerr(s.catId);
@@ -1256,7 +1256,7 @@ async function undoConfirmS(id){
 async function confirmDeleteSighting(id){
   showConfirm('🗑️','Spotting verwijderen?',
     'De spotting wordt permanent verwijderd en het territorium verkleint.',
-    'Ja, verwijderen','btn-lost',()=>{
+    'Ja, verwijderen','btn-lost',async()=>{
       sightings=sightings.filter(x=>x.id!==id);
       await sb.from('sightings').delete().eq('id',id);
       renderAll();if(selectedCat)renderTerr(selectedCat);
