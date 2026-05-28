@@ -296,14 +296,14 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <div id="login-area">
         <div class="form-group">
           <label class="form-label">Gebruikersnaam</label>
-          <input class="form-input" id="login-name" placeholder="Jouw naam" oninput="resetLoginPin()">
+          <input class="form-input" id="login-name" placeholder="Jouw naam">
         </div>
-        <label class="form-label">PIN (4 cijfers)</label>
-        <div class="pin-display" id="pin-disp">····</div>
-        <div class="pin-dots" id="pin-dots">
-          <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+        <div class="form-group">
+          <label class="form-label">Wachtwoord</label>
+          <input class="form-input" id="login-password" type="password" placeholder="Jouw wachtwoord" onkeydown="if(event.key==='Enter')tryLogin()">
         </div>
-        <div class="pin-grid" id="pin-grid-login"></div>
+        <div id="login-error" style="font-size:0.78rem;color:var(--lost);min-height:18px;margin-bottom:4px;"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:0" onclick="tryLogin()">Inloggen</button>
         <hr class="divider">
         <div style="text-align:center;font-size:0.77rem;color:var(--mid);margin-bottom:9px;">Nog geen account?</div>
         <button class="btn btn-forest btn-full" style="margin-top:0" onclick="toRegister()">Nieuw account aanmaken</button>
@@ -321,12 +321,15 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
           <label class="form-label">E-mailadres <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(voor meldingen als jouw kat gespot wordt)</span></label>
           <input class="form-input" id="reg-email" type="email" placeholder="jouw@email.be">
         </div>
-        <label class="form-label">Kies een PIN (4 cijfers)</label>
-        <div class="pin-display" id="reg-pin-disp">····</div>
-        <div class="pin-dots" id="reg-pin-dots">
-          <div class="pin-dot" id="rpd0"></div><div class="pin-dot" id="rpd1"></div><div class="pin-dot" id="rpd2"></div><div class="pin-dot" id="rpd3"></div>
+        <div class="form-group">
+          <label class="form-label">Wachtwoord</label>
+          <input class="form-input" id="reg-password" type="password" placeholder="Kies een wachtwoord (min. 6 tekens)">
         </div>
-        <div class="pin-grid" id="pin-grid-reg"></div>
+        <div class="form-group">
+          <label class="form-label">Bevestig wachtwoord</label>
+          <input class="form-input" id="reg-password2" type="password" placeholder="Herhaal wachtwoord">
+        </div>
+        <div id="reg-error" style="font-size:0.78rem;color:var(--lost);min-height:18px;"></div>
         <button class="btn btn-primary btn-full" onclick="doRegister()">Account aanmaken</button>
         <button class="btn btn-outline btn-full" onclick="toLogin()" style="margin-top:5px">← Terug</button>
       </div>
@@ -497,18 +500,18 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
         <input class="form-input" id="prof-name" placeholder="Jouw naam">
       </div>
       <hr class="divider">
-      <div style="font-size:0.78rem;color:var(--mid);margin-bottom:10px;">PIN wijzigen (laat leeg om hetzelfde te houden)</div>
+      <div style="font-size:0.78rem;color:var(--mid);margin-bottom:10px;">Wachtwoord wijzigen (laat leeg om hetzelfde te houden)</div>
       <div class="form-group">
-        <label class="form-label">Huidige PIN</label>
-        <input class="form-input" id="prof-old-pin" type="password" maxlength="4" placeholder="····" inputmode="numeric">
+        <label class="form-label">Huidig wachtwoord</label>
+        <input class="form-input" id="prof-old-pin" type="password" placeholder="Huidig wachtwoord">
       </div>
       <div class="form-group">
-        <label class="form-label">Nieuwe PIN (4 cijfers)</label>
-        <input class="form-input" id="prof-new-pin" type="password" maxlength="4" placeholder="····" inputmode="numeric">
+        <label class="form-label">Nieuw wachtwoord</label>
+        <input class="form-input" id="prof-new-pin" type="password" placeholder="Nieuw wachtwoord (min. 6 tekens)">
       </div>
       <div class="form-group">
-        <label class="form-label">Bevestig nieuwe PIN</label>
-        <input class="form-input" id="prof-confirm-pin" type="password" maxlength="4" placeholder="····" inputmode="numeric">
+        <label class="form-label">Bevestig nieuw wachtwoord</label>
+        <input class="form-input" id="prof-confirm-pin" type="password" placeholder="Herhaal nieuw wachtwoord">
       </div>
       <button class="btn btn-primary btn-full" onclick="saveProfile()">Opslaan</button>
     </div>
@@ -537,7 +540,7 @@ let pendingSpotPhoto=null; // file object for spot photo upload
 let pickingLocForSpot=false; // true when picking location specifically for a spotting
 let map, catMkrs={}, sightMkrs=[], terrLayers={};
 let selectedCat=null, lostCatId=null;
-let loginPin='', regPin='';
+// PIN replaced by password fields
 
 // DATA — wordt geladen vanuit Supabase bij opstarten
 let users=[];
@@ -1271,30 +1274,55 @@ function kpress(k,pref){
   }
 }
 function updDots(pref,buf){for(let i=0;i<4;i++){const d=document.getElementById(`${pref}${i}`);if(d)d.className='pin-dot'+(i<buf.length?' filled':'');}}
-function resetLoginPin(){loginPin='';updDots('pd','');document.getElementById('pin-disp').textContent='····';}
-function tryLogin(){
+function resetLoginPin(){const el=document.getElementById('login-password');if(el)el.value='';const err=document.getElementById('login-error');if(err)err.textContent='';}
+async function tryLogin(){
   const name=document.getElementById('login-name').value.trim().toLowerCase();
-  const u=users.find(u=>u.name.toLowerCase()===name&&u.pin===loginPin);
-  if(u){setMe(u);closeModal('login-modal');}else{toast('Ongeldige naam of PIN.',true);resetLoginPin();}
+  const password=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error');
+  errEl.textContent='';
+  if(!name||!password){errEl.textContent='Vul naam en wachtwoord in.';return;}
+  const u=users.find(u=>u.name.toLowerCase()===name);
+  if(!u){errEl.textContent='Gebruiker niet gevonden.';return;}
+  const ok=await verifyPassword(password,u.pin);
+  if(ok){
+    // Migrate legacy PIN to hashed password
+    if(u.pin&&!u.pin.startsWith('sha256:')){
+      u.pin=await hashPassword(password);
+      await sb.from('users').update({pin:u.pin}).eq('id',u.id);
+    }
+    setMe(u);closeModal('login-modal');
+    document.getElementById('login-password').value='';
+  }else{
+    errEl.textContent='Onjuist wachtwoord.';
+  }
 }
 async function doRegister(){
   const name=document.getElementById('reg-name').value.trim();
-  if(!name){toast('Vul een naam in.',true);return;}
-  if(regPin.length<4){toast('Kies een 4-cijferige PIN.',true);return;}
-  if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){toast('Naam al in gebruik.',true);return;}
+  const password=document.getElementById('reg-password').value;
+  const password2=document.getElementById('reg-password2').value;
+  const errEl=document.getElementById('reg-error');
+  errEl.textContent='';
+  if(!name){errEl.textContent='Vul een naam in.';return;}
+  if(password.length<6){errEl.textContent='Wachtwoord moet minstens 6 tekens zijn.';return;}
+  if(password!==password2){errEl.textContent='Wachtwoorden komen niet overeen.';return;}
+  if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){errEl.textContent='Naam al in gebruik.';return;}
   const email=document.getElementById('reg-email')?.value.trim()||'';
-  const u={id:'u'+Date.now(),name,pin:regPin,email,cats:[]};users.push(u);
+  const hashedPw=await hashPassword(password);
+  const u={id:'u'+Date.now(),name,pin:hashedPw,email,cats:[]};
+  users.push(u);
   await sb.from('users').insert({id:u.id,name:u.name,pin:u.pin,email:u.email});
   setMe(u);closeModal('login-modal');
-  document.getElementById('reg-name').value='';regPin='';updDots('rpd','');
-  document.getElementById('reg-pin-disp').textContent='····';
+  document.getElementById('reg-name').value='';
+  document.getElementById('reg-password').value='';
+  document.getElementById('reg-password2').value='';
 }
 function setMe(u, silent=false){
   me=u;
   document.getElementById('header-username').textContent=u.name;
   document.getElementById('header-avatar').textContent=u.name[0].toUpperCase();
   // Sessie opslaan zodat je ingelogd blijft na refresh
-  try{localStorage.setItem('kk_session', JSON.stringify({id:u.id,name:u.name,pin:u.pin}));}catch(e){}
+  try{localStorage.setItem('kk_session', JSON.stringify({id:u.id,name:u.name}));}catch(e){}
+  // Never store password/hash in localStorage
   renderAll();
   // Center map on own cats after a short delay (map needs to be ready)
   setTimeout(()=>centerOnOwnCats(), 300);
@@ -1391,10 +1419,10 @@ window.onload=async()=>{
     const saved=localStorage.getItem('kk_session');
     if(saved){
       const s=JSON.parse(saved);
-      // Verify user still exists in DB with same PIN
-      const u=users.find(u=>u.id===s.id&&u.pin===s.pin);
-      if(u){setMe(u,true);} // silent=true, geen welkomsttoast bij refresh
-      else localStorage.removeItem('kk_session'); // account gewijzigd of verwijderd
+      // Match by id only — password stays server-side
+      const u=users.find(u=>u.id===s.id);
+      if(u&&u.name===s.name){setMe(u,true);}
+      else localStorage.removeItem('kk_session');
     }
   }catch(e){}
   // PWA service worker -- tijdelijk uitgeschakeld tijdens development
@@ -1539,10 +1567,11 @@ async function saveProfile(){
   if(users.find(u=>u.id!==me.id&&u.name.toLowerCase()===name.toLowerCase())){toast('Naam al in gebruik.',true);return;}
   // PIN change requested?
   if(newPin||oldPin||confirmPin){
-    if(oldPin!==me.pin){toast('Huidige PIN is onjuist.',true);return;}
-    if(newPin.length!==4||!/^\d{4}$/.test(newPin)){toast('Nieuwe PIN moet 4 cijfers zijn.',true);return;}
-    if(newPin!==confirmPin){toast('Nieuwe PINs komen niet overeen.',true);return;}
-    me.pin=newPin;
+    const oldOk=await verifyPassword(oldPin,me.pin);
+    if(!oldOk){toast('Huidig wachtwoord is onjuist.',true);return;}
+    if(newPin.length<6){toast('Nieuw wachtwoord moet minstens 6 tekens zijn.',true);return;}
+    if(newPin!==confirmPin){toast('Wachtwoorden komen niet overeen.',true);return;}
+    me.pin=await hashPassword(newPin);
   }
   me.name=name;
   await sb.from('users').update({name:me.name,pin:me.pin}).eq('id',me.id);
@@ -1602,6 +1631,28 @@ async function confirmDeleteSighting(id){
       renderAll();if(selectedCat)renderTerr(selectedCat);
       toast('Spotting verwijderd.');
     });
+}
+
+// PASSWORD HASHING (SHA-256 + salt via Web Crypto API)
+async function hashPassword(password, salt=null){
+  const s=salt||Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');
+  const encoder=new TextEncoder();
+  const data=encoder.encode(s+password);
+  const hashBuffer=await crypto.subtle.digest('SHA-256',data);
+  const hashArray=Array.from(new Uint8Array(hashBuffer));
+  const hashHex=hashArray.map(b=>b.toString(16).padStart(2,'0')).join('');
+  return `sha256:${s}:${hashHex}`;
+}
+
+async function verifyPassword(password, stored){
+  if(!stored)return false;
+  // Legacy: plain PIN (4 digits) — migrate on login
+  if(!stored.startsWith('sha256:')){
+    return password===stored;
+  }
+  const salt=stored.split(':')[1];
+  const check=await hashPassword(password,salt);
+  return check===stored;
 }
 
 // AGE CALCULATION
