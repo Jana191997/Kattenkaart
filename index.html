@@ -1098,11 +1098,14 @@ async function doRegister(){
   document.getElementById('reg-name').value='';regPin='';updDots('rpd','');
   document.getElementById('reg-pin-disp').textContent='····';
 }
-function setMe(u){
+function setMe(u, silent=false){
   me=u;
   document.getElementById('header-username').textContent=u.name;
   document.getElementById('header-avatar').textContent=u.name[0].toUpperCase();
-  renderAll();toast(`Welkom, ${u.name}! 👋`);
+  // Sessie opslaan zodat je ingelogd blijft na refresh
+  try{localStorage.setItem('kk_session', JSON.stringify({id:u.id,name:u.name,pin:u.pin}));}catch(e){}
+  renderAll();
+  if(!silent)toast(`Welkom, ${u.name}! 👋`);
 }
 function toRegister(){document.getElementById('login-area').style.display='none';document.getElementById('register-area').style.display='block';}
 function toLogin(){document.getElementById('login-area').style.display='block';document.getElementById('register-area').style.display='none';}
@@ -1173,8 +1176,17 @@ async function loadFromSupabase(){
 window.onload=async()=>{
   initMap();
   await loadFromSupabase();
-  // Auto-login eerste gebruiker als die bestaat, anders wachten
-  if(users.length)setMe(users[0]);
+  // Sessie herstellen van localStorage
+  try{
+    const saved=localStorage.getItem('kk_session');
+    if(saved){
+      const s=JSON.parse(saved);
+      // Verify user still exists in DB with same PIN
+      const u=users.find(u=>u.id===s.id&&u.pin===s.pin);
+      if(u){setMe(u,true);} // silent=true, geen welkomsttoast bij refresh
+      else localStorage.removeItem('kk_session'); // account gewijzigd of verwijderd
+    }
+  }catch(e){}
   // PWA service worker -- tijdelijk uitgeschakeld tijdens development
   // if('serviceWorker' in navigator){
   //   navigator.serviceWorker.register('/sw.js')
@@ -1280,6 +1292,7 @@ function toggleUserMenu(e){
 }
 function doLogout(){
   me=null;
+  try{localStorage.removeItem('kk_session');}catch(e){}
   document.getElementById('header-username').textContent='Log in';
   document.getElementById('header-avatar').textContent='👤';
   document.getElementById('user-menu').classList.remove('open');
