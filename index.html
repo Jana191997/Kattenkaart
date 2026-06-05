@@ -40,7 +40,55 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .btn-sm{padding:5px 10px;font-size:0.73rem;}.btn-full{width:100%;margin-top:8px;padding:10px;font-size:0.86rem;}
 .app{display:grid;grid-template-columns:355px 1fr;height:calc(100vh - 58px);}
 /* Mobile layout */
+/* MOBILE BOTTOM NAV */
+.mobile-nav{display:none;}
+.mobile-sheet{display:none;}
+.mobile-sheet-backdrop{display:none;}
 @media(max-width:700px){
+  /* Hide desktop sidebar */
+  .sidebar{display:none !important;}
+  /* Show mobile nav */
+  .mobile-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--warm-white);border-top:1px solid var(--border);
+    z-index:600;height:58px;box-shadow:0 -2px 12px rgba(0,0,0,0.1);
+  }
+  .mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:2px;cursor:pointer;padding:4px 0;
+    color:var(--mid);transition:color 0.2s;}
+  .mobile-nav-item.active{color:var(--terracotta);}
+  .mobile-nav-icon{font-size:1.3rem;line-height:1;}
+  .mobile-nav-label{font-size:0.6rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;}
+  .mobile-nav-badge{position:absolute;top:-2px;right:-4px;background:var(--terracotta);
+    color:white;border-radius:8px;font-size:0.55rem;font-weight:700;padding:1px 4px;min-width:14px;text-align:center;}
+  .mobile-nav-icon-wrap{position:relative;display:inline-block;}
+  /* Bigger cat cards in mobile sheet */
+  .mobile-sheet .cat-card-inner{align-items:stretch;}
+  .mobile-sheet .cat-card-thumb{width:90px;min-width:90px;max-width:90px;align-self:stretch;}
+  .mobile-sheet .cat-card-body{padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;}
+  .mobile-sheet .cat-name{font-size:1.05rem;}
+  .mobile-sheet .cat-bio{font-size:0.82rem;}
+  /* Bottom sheet */
+  .mobile-sheet{
+    display:block;position:fixed;bottom:-100%;left:0;right:0;
+    background:var(--warm-white);border-radius:16px 16px 0 0;
+    z-index:700;height:45vh;
+    box-shadow:0 -4px 24px rgba(0,0,0,0.15);
+    transition:bottom 0.3s cubic-bezier(0.32,0.72,0,1);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .mobile-sheet.open{bottom:58px;}
+  .mobile-sheet-top{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px 4px;flex-shrink:0;}
+  .mobile-sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto;}
+  .mobile-sheet-close{background:var(--border);border:none;border-radius:50%;
+    width:26px;height:26px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;}
+  .mobile-sheet-title{font-family:'Playfair Display',serif;font-size:0.95rem;font-weight:700;}
+  .mobile-sheet-content{overflow-y:auto;flex:1;padding:0 14px 16px;}
+  .mobile-sheet-backdrop{display:block;position:fixed;top:0;left:0;right:0;bottom:58px;
+    background:rgba(0,0,0,0);z-index:500;pointer-events:none;transition:background 0.3s;}
+  .mobile-sheet-backdrop.open{background:rgba(0,0,0,0.2);pointer-events:all;}
+
   header{padding:0 10px;height:52px;}
   
   .logo{font-size:1.1rem;}
@@ -70,11 +118,11 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .cat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
 .cat-card.selected{border-color:var(--terracotta);box-shadow:0 0 0 2px rgba(192,98,58,0.2);}
 .cat-card.lost-card{border-color:var(--lost);}
-.cat-card-inner{display:flex;gap:0;align-items:stretch;height:80px;max-height:80px;}
+.cat-card-inner{display:flex;gap:0;align-items:stretch;}
 .cat-card-thumb{width:80px;min-width:80px;max-width:80px;background:linear-gradient(135deg,#c8b8a2,#a89880);
-  display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0;}
+  display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0;align-self:stretch;}
 .cat-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-.cat-card-body{padding:8px 10px;flex:1;min-width:0;overflow:hidden;}
+.cat-card-body{padding:8px 10px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;}
 .section-label{font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
   color:var(--mid);padding:4px 2px 2px;}
 .sp-cat-opt{display:flex;align-items:center;gap:10px;padding:9px 11px;border:2px solid var(--border);
@@ -100,7 +148,8 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 .thumb-opt-label{font-size:0.7rem;color:var(--mid);margin-top:3px;font-weight:700;}
 .cat-name{font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:700;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .cat-meta{font-size:0.73rem;color:var(--mid);margin-top:2px;}
-.cat-bio{font-size:0.78rem;margin-top:4px;line-height:1.45;}
+.cat-bio{font-size:0.78rem;margin-top:4px;line-height:1.45;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;}
 .tag{display:inline-block;font-size:0.66rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:2px 7px;border-radius:10px;margin-top:5px;margin-right:3px;}
 .tag-own{background:var(--terracotta);color:white;position:absolute;top:7px;right:7px;}
 .tag-territory{color:var(--forest);background:rgba(58,94,78,0.1);}
@@ -303,8 +352,46 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       </div>
       <div class="detail-actions" id="detail-actions"></div>
     </div>
+    <div style="padding:10px 14px 6px;border-top:1px solid var(--border);font-size:0.68rem;color:var(--mid);display:flex;justify-content:space-between;align-items:center;">
+      <span>© 2025 Jana Van de Velde</span>
+      <a href="#" onclick="openModal('over-modal');return false" style="color:var(--terracotta);text-decoration:none;font-weight:700;">Over</a>
+    </div>
   </div>
 </div>
+
+<!-- COPYRIGHT FOOTER -->
+<div id="app-footer" style="display:none;"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobile-nav">
+  <div class="mobile-nav-item active" id="nav-katten" onclick="mobileTab('katten')">
+    <div class="mobile-nav-icon">🐱</div>
+    <div class="mobile-nav-label">Katten</div>
+  </div>
+  <div class="mobile-nav-item" id="nav-gespot" onclick="mobileTab('gespot')">
+    <div class="mobile-nav-icon">📍</div>
+    <div class="mobile-nav-label">Gespot</div>
+  </div>
+  <div class="mobile-nav-item" id="nav-bevestigen" onclick="mobileTab('bevestigen')">
+    <div class="mobile-nav-icon">✅</div>
+    <div class="mobile-nav-label" id="mob-bevestigen-label">Bevestigen</div>
+  </div>
+  <div class="mobile-nav-item" id="nav-meldingen" onclick="mobileTab('meldingen')">
+    <div class="mobile-nav-icon">🔔</div>
+    <div class="mobile-nav-label" id="mob-meldingen-label">Meldingen</div>
+  </div>
+</nav>
+
+<!-- MOBILE BOTTOM SHEET -->
+<div class="mobile-sheet" id="mobile-sheet">
+  <div class="mobile-sheet-top">
+    <div class="mobile-sheet-handle"></div>
+    <div class="mobile-sheet-title" id="mobile-sheet-title"></div>
+    <button class="mobile-sheet-close" onclick="closeMobileSheet()">✕</button>
+  </div>
+  <div class="mobile-sheet-content" id="mobile-sheet-content"></div>
+</div>
+<div class="mobile-sheet-backdrop" id="mobile-sheet-backdrop" onclick="closeMobileSheet()"></div>
 
 <!-- LOGIN MODAL -->
 <div class="modal-overlay" id="login-modal">
@@ -317,7 +404,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <div id="login-area">
         <div class="form-group">
           <label class="form-label">Gebruikersnaam</label>
-          <input class="form-input" id="login-name" placeholder="Jouw naam">
+          <input class="form-input" id="login-name" placeholder="Jouw naam" autocapitalize="none" autocorrect="off" autocomplete="username">
         </div>
         <div class="form-group">
           <label class="form-label">Wachtwoord</label>
@@ -328,10 +415,6 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
         <hr class="divider">
         <div style="text-align:center;font-size:0.77rem;color:var(--mid);margin-bottom:9px;">Nog geen account?</div>
         <button class="btn btn-forest btn-full" style="margin-top:0" onclick="toRegister()">Nieuw account aanmaken</button>
-        <div class="itsme-box">
-          <span style="font-size:1.3rem">🇧🇪</span>
-          <div><strong>itsme® integratie</strong><br>In de toekomst: log in met itsme voor officiële adresverificatie via eID.<br><span class="itsme-badge">Vereist registratie als officiële app</span></div>
-        </div>
         <div style="text-align:center;margin-top:10px;font-size:0.74rem;color:var(--mid);">
           Door een account aan te maken ga je akkoord met ons <a href="#" onclick="openPrivacy();return false" style="color:var(--terracotta);text-decoration:underline;">privacybeleid</a>.
         </div>
@@ -339,12 +422,9 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <div id="register-area" style="display:none">
         <div class="form-group">
           <label class="form-label">Naam</label>
-          <input class="form-input" id="reg-name" placeholder="Jouw naam of bijnaam">
+          <input class="form-input" id="reg-name" placeholder="Jouw naam of bijnaam" autocapitalize="none" autocorrect="off" autocomplete="username">
         </div>
-        <div class="form-group">
-          <label class="form-label">E-mailadres <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(voor meldingen als jouw kat gespot wordt)</span></label>
-          <input class="form-input" id="reg-email" type="email" placeholder="jouw@email.be">
-        </div>
+
         <div class="form-group">
           <label class="form-label">Wachtwoord</label>
           <input class="form-input" id="reg-password" type="password" placeholder="Kies een wachtwoord (min. 6 tekens)">
@@ -437,7 +517,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
             </div>
           </div>
         </div>
-        <div class="info-box" style="margin-bottom:8px;">📬 Meldingen worden verstuurd naar het e-mailadres van jouw account.</div>
+
         <hr class="divider">
         <label class="form-label">Extra foto's <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(max. 3)</span></label>
         <div class="photo-gallery" id="extra-photos-preview"></div>
@@ -491,13 +571,16 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
             <textarea class="form-textarea" id="sp-notes" placeholder="Wat deed de kat?..."></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">Foto (optioneel)</label>
-            <div class="file-upload" onclick="document.getElementById('sp-photo').click()">
-              <input type="file" id="sp-photo" accept="image/*" onchange="prevImg(this,'sp-prev')">
+            <label class="form-label">Foto <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(optioneel maar aanbevolen)</span></label>
+            <div class="file-upload" onclick="document.getElementById('sp-photo').click()" id="sp-photo-upload">
+              <input type="file" id="sp-photo" accept="image/*" onchange="prevImg(this,'sp-prev');updateSpotPhotoHint()">
               <div class="file-upload-icon">📸</div>
-              <div class="file-upload-text">Upload een foto</div>
+              <div class="file-upload-text">Foto toevoegen vergroot de kans op bevestiging!</div>
             </div>
             <img id="sp-prev" class="preview-img" style="display:none">
+            <div id="sp-photo-hint" style="font-size:0.75rem;margin-top:5px;padding:6px 10px;border-radius:7px;background:#fef3cd;color:#856404;display:none;">
+              💡 Zonder foto wordt de spotting automatisch bevestigd als de locatie binnen het territorium valt, anders wacht ze op handmatige bevestiging door de eigenaar.
+            </div>
           </div>
           <button class="btn btn-primary btn-full" onclick="submitSighting()">Spotting versturen</button>
         </div>
@@ -526,6 +609,44 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 
 <div class="toast" id="toast"></div>
 
+<!-- OVER MODAL -->
+<div class="modal-overlay" id="over-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">Over KattenKaart</div>
+      <button class="modal-close" onclick="closeModal('over-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="font-size:0.86rem;line-height:1.7;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:2.5rem;margin-bottom:6px;">🐱</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;">KattenKaart België</div>
+        <div style="font-size:0.75rem;color:var(--mid);margin-top:2px;">Buurt Katten Spotter</div>
+      </div>
+      <p>KattenKaart is een gratis community-app waarmee je katten in jouw buurt kan registreren, volgen en spotten. Het idee ontstond vanuit een eenvoudige vraag: waar zwerft mijn kat eigenlijk naartoe?</p>
+      <hr class="divider">
+      <p><strong>Gemaakt door</strong><br>Jana Van de Velde<br>
+      <a href="https://www.facebook.com/profile.php?id=61590245620181" target="_blank" style="color:var(--terracotta);">📘 Facebook pagina</a></p>
+      <p><strong>Broncode</strong><br>
+      <a href="https://github.com/Kattenkaart/Belgie" target="_blank" style="color:var(--terracotta);">🐙 github.com/Jana191997/Kattenkaart</a></p>
+      <p><strong>Versie</strong><br>1.0 — mei 2025</p>
+      <hr class="divider">
+      <p style="font-size:0.75rem;color:var(--mid);">© 2025 Jana Van de Velde. Alle rechten voorbehouden. KattenKaart mag niet worden gekopieerd, gewijzigd of commercieel gebruikt zonder uitdrukkelijke schriftelijke toestemming.</p>
+      <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="closeModal('over-modal')">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE CAT PROFILE MODAL -->
+<div class="modal-overlay" id="mobile-cat-modal">
+  <div class="modal" style="max-width:100%;">
+    <div class="modal-header" id="mobile-cat-modal-header">
+      <div class="modal-title" id="mobile-cat-modal-name"></div>
+      <button class="modal-close" onclick="closeModal('mobile-cat-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="mobile-cat-modal-body"></div>
+  </div>
+</div>
+
 <!-- COOKIE BANNER -->
 <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--charcoal);color:white;padding:14px 20px;z-index:5000;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,0.2);">
   <div style="font-size:0.82rem;flex:1;min-width:200px;">
@@ -551,7 +672,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <p><strong>Welke gegevens verzamelen we?</strong></p>
       <ul style="margin:6px 0 12px 18px;">
         <li>Gebruikersnaam en gehashed wachtwoord</li>
-        <li>E-mailadres (optioneel, alleen voor meldingen)</li>
+
         <li>Thuisadres van katten (straatnaam + stad, huisnummer verborgen voor publiek)</li>
         <li>Foto's van katten en spottings</li>
         <li>Locatiegegevens van spottings</li>
@@ -559,7 +680,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
       <p><strong>Waarom?</strong></p>
       <ul style="margin:6px 0 12px 18px;">
         <li>Om katten te kunnen registreren en terugvinden</li>
-        <li>Om eigenaren te verwittigen bij een spotting (via e-mail)</li>
+        <li>Om buurtbewoners te notificeren bij spottings van vermiste katten (in-app)</li>
         <li>Om jouw sessie te bewaren (localStorage)</li>
       </ul>
       <p><strong>Hoe lang bewaren we het?</strong></p>
@@ -573,7 +694,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
         <li>Recht op correctie (profiel bewerken)</li>
       </ul>
       <p><strong>Contact</strong></p>
-      <p>Vragen over privacy? Stuur een bericht via de app of open een GitHub issue op Jana191997/Kattenkaart.</p>
+      <p>Vragen over privacy? Stuur een bericht via de <a href="https://www.facebook.com/profile.php?id=61590245620181" target="_blank" style="color:var(--terracotta);">Facebook pagina</a> of open een issue op <a href="https://github.com/Kattenkaart/Belgie" target="_blank" style="color:var(--terracotta);">GitHub</a>.</p>
       <hr class="divider">
       <button class="btn btn-primary btn-full" onclick="closeModal('privacy-modal')">Sluiten</button>
     </div>
@@ -630,6 +751,7 @@ header{background:var(--forest);color:var(--cream);padding:0 18px;display:flex;a
 <!-- USER DROPDOWN MENU -->
 <div class="user-menu" id="user-menu">
   <div class="user-menu-item" onclick="openProfileModal()">✏️ Profiel bewerken</div>
+  <div class="user-menu-item" onclick="openModal('over-modal');document.getElementById('user-menu').classList.remove('open')">ℹ️ Over KattenKaart</div>
   <div class="user-menu-item" onclick="openPrivacy()">🔒 Privacybeleid</div>
   <div class="user-menu-item danger" onclick="openModal('delete-account-modal');document.getElementById('user-menu').classList.remove('open')">🗑️ Account verwijderen</div>
   <div class="user-menu-item danger" onclick="doLogout()">🚪 Uitloggen</div>
@@ -700,9 +822,16 @@ let notifs=[
 
 // MAP
 function initMap(){
-  map=L.map('map').setView(OUD,13);
+  const isMobile=window.innerWidth<=700;
+  map=L.map('map',{zoomControl:!isMobile}).setView(OUD,13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
   map.on('click',onMapClick);
+  // Fix attribution position on mobile immediately
+  setTimeout(()=>{
+    if(window.innerWidth<=700){
+      document.querySelectorAll('.leaflet-bottom').forEach(el=>el.style.cssText='bottom:52px!important');
+    }
+  },100);
   // Auto-center on user's location if GPS available
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
@@ -791,8 +920,10 @@ function mkIcon(cat, clusterCount=0){
 }
 
 function dotIcon(status){
-  const c={confirmed:'#1a6636',pending:'#856404',denied:'#9b2020'}[status]||'#856404';
-  return L.divIcon({html:`<div style="width:14px;height:14px;background:${c};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>`,className:'',iconSize:[14,14],iconAnchor:[7,7]});
+  const c={confirmed:'#1a6636',pending:'#856404',denied:'#9b2020',inactive:'#aaa'}[status]||'#aaa';
+  const size=status==='inactive'?10:14;
+  const opacity=status==='inactive'?'0.5':'1';
+  return L.divIcon({html:`<div style="width:${size}px;height:${size}px;background:${c};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.2);opacity:${opacity};"></div>`,className:'',iconSize:[size,size],iconAnchor:[size/2,size/2]});
 }
 
 function renderCatMkrs(){
@@ -819,7 +950,11 @@ function renderCatMkrs(){
 
 function renderSightMkrs(){
   sightMkrs.forEach(m=>map.removeLayer(m));sightMkrs=[];
-  sightings.filter(s=>s.status==='confirmed').forEach(s=>{sightMkrs.push(L.marker([s.lat,s.lng],{icon:dotIcon(s.status)}).addTo(map));});
+  sightings.filter(s=>s.status==='confirmed').forEach(s=>{
+    const isSelected=selectedCat&&s.catId===selectedCat;
+    const icon=isSelected?dotIcon('confirmed'):dotIcon('inactive');
+    sightMkrs.push(L.marker([s.lat,s.lng],{icon}).addTo(map));
+  });
 }
 
 function renderTerr(catId){
@@ -828,14 +963,30 @@ function renderTerr(catId){
   const conf=sightings.filter(s=>s.catId===catId&&s.status==='confirmed');
   const isOwn=me&&cat.owner===me.id;
   const col=cat.lost?'#b03030':isOwn?'#c0623a':'#3a5e4e';
-  const pts=[{lat:cat.lat,lng:cat.lng},...conf.map(s=>({lat:s.lat,lng:s.lng}))];
-  const opt={color:col,fillColor:col,fillOpacity:0.1,weight:2,dashArray:'6 4'};
-  const baseRadius=cat.lost?1000:120; // 1km for lost cats, 120m default
-  if(conf.length===0)terrLayers.c=L.circle([cat.lat,cat.lng],{radius:baseRadius,...opt}).addTo(map);
-  else{
-    terrLayers.p=L.polygon(pts.map(p=>[p.lat,p.lng]),opt).addTo(map);
-    if(cat.lost)terrLayers.c=L.circle([cat.lat,cat.lng],{radius:1000,color:col,fillColor:col,fillOpacity:0.05,weight:1,dashArray:'4 6'}).addTo(map);
+  const opt={color:col,fillColor:col,fillOpacity:0.12,weight:2,dashArray:'5 4'};
+
+  // Find the minimum enclosing circle:
+  // center = home location, radius = max distance to any spotting + padding
+  const pts=conf.map(s=>([s.lat,s.lng]));
+  let radius=cat.lost?1000:150; // minimum radius
+  let cx=cat.lat, cy=cat.lng;
+
+  if(pts.length>0){
+    // Expand radius to cover all sightings
+    pts.forEach(p=>{
+      const d=map.distance([cx,cy],p)+80; // +80m padding
+      if(d>radius)radius=d;
+    });
+    // Cap at reasonable max
+    radius=Math.min(radius, cat.lost?3000:1200);
   }
+
+  terrLayers.c=L.circle([cx,cy],{radius,...opt}).addTo(map);
+
+  // Small dot at home
+  terrLayers.h=L.circleMarker([cat.lat,cat.lng],{
+    radius:5,color:col,fillColor:col,fillOpacity:0.8,weight:2
+  }).addTo(map);
 }
 
 function renderAll(){
@@ -869,11 +1020,11 @@ function renderCatsList(){
   const myCats=me?cats.filter(c=>c.owner===me.id):[];
   const myCatIds=myCats.map(c=>c.id);
 
-  // Nearby cats (not own, within 500m)
+  // Nearby cats (never own cats, within 500m)
   let nearbyCats=[];
   if(userLat){
     nearbyCats=cats
-      .filter(c=>!myCatIds.includes(c.id))
+      .filter(c=>!myCatIds.includes(c.id)) // exclude own cats
       .map(c=>({cat:c,dist:gd(userLat,userLng,c.lat,c.lng)}))
       .filter(x=>x.dist<0.0045)
       .sort((a,b)=>a.dist-b.dist)
@@ -882,43 +1033,62 @@ function renderCatsList(){
 
   let html='';
 
-  // Always show own cats first
+  // Own cats — always visible at top
   if(myCats.length){
-    if(nearbyCats.length||!userLat)html+=`<div class="section-label">Mijn katten</div>`;
-    html+=myCats.map(cat=>catCardHtml(cat,true)).join('');
+    html+=`<div class="section-label">Mijn katten</div>`;
+    html+=myCats.map(cat=>catCardHtml(cat,true,true)).join('');
   }
 
-  // Then nearby cats
-  if(userLat){
-    if(nearbyCats.length){
-      html+=`<div class="section-label" style="margin-top:6px">In de buurt</div>`;
-      html+=nearbyCats.map(cat=>catCardHtml(cat,false)).join('');
-    } else if(!myCats.length){
-      html+=`<div class="empty-state"><div class="big-icon">🔍</div>Geen katten gevonden binnen 500m.</div>`;
-    }
-  } else if(!myCats.length){
-    html+=`<div class="info-box" style="margin-bottom:8px;">
-      📍 Klik op de kaart of gebruik je locatie om katten in de buurt te zien.
+  // Location hint if no location yet
+  if(!userLat){
+    html+=`<div class="info-box" style="margin-top:8px;">
+      📍 Klik op de kaart of gebruik GPS om katten in de buurt te zien.
       <button class="btn btn-forest btn-sm" style="margin-top:7px;width:100%" onclick="useGPS()">📍 GPS gebruiken</button>
     </div>`;
-  } else {
-    html+=`<div class="info-box" style="margin-top:6px;">
-      📍 Klik op de kaart of gebruik GPS om ook katten in de buurt te zien.
-      <button class="btn btn-forest btn-sm" style="margin-top:7px;width:100%" onclick="useGPS()">📍 GPS gebruiken</button>
-    </div>`;
+  } else if(nearbyCats.length){
+    html+=`<div class="section-label" style="margin-top:8px">In de buurt</div>`;
+    html+=nearbyCats.map(cat=>catCardHtml(cat,false)).join('');
+  } else if(cats.filter(c=>!myCatIds.includes(c.id)).length){
+    html+=`<div class="empty-state" style="padding:16px 4px;"><div class="big-icon">🔍</div>Geen andere katten binnen 500m.</div>`;
   }
 
   el.innerHTML=html;
 }
 
+let sightFilter='confirmed';
 function renderSightList(){
   const el=document.getElementById('sightings-list');
   if(!me){
-    el.innerHTML=`<div class="empty-state"><div class="big-icon">🔐</div>Log in om de spottings van jouw katten te zien.</div>`;
+    el.innerHTML=`<div class="empty-state"><div class="big-icon">🔐</div>Log in om spottings te zien.</div>`;
     return;
   }
   const myCatIds=cats.filter(c=>c.owner===me.id).map(c=>c.id);
-  const c=sightings.filter(s=>s.status==='confirmed'&&myCatIds.includes(s.catId));
+  // Filter tabs
+  el.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:12px;">
+    <button class="btn btn-sm ${sightFilter==='confirmed'?'btn-primary':'btn-outline'}" onclick="sightFilter='confirmed';renderSightList()">✅ Bevestigd</button>
+    <button class="btn btn-sm ${sightFilter==='unmatched'?'btn-primary':'btn-outline'}" onclick="sightFilter='unmatched';renderSightList()">❓ Onbekend</button>
+  </div>`;
+  let c;
+  if(sightFilter==='unmatched'){
+    // Show unmatched sightings within 10km
+    const lat=currentLat||OUD[0], lng=currentLng||OUD[1];
+    c=sightings.filter(s=>s.status==='unmatched'&&gd(lat,lng,s.lat||OUD[0],s.lng||OUD[1])<0.09);
+    if(!c.length){el.innerHTML+=`<div class="empty-state"><div class="big-icon">🔍</div>Geen onbekende spottings in de buurt.</div>`;return;}
+    el.innerHTML+=c.map(s=>`<div class="sighting-card">
+      <div class="sighting-header"><div class="sighting-cat">❓ Onbekende kat</div><div class="sighting-time">${fmt(s.time)}</div></div>
+      <div style="color:var(--mid)">📍 ${s.location}</div>
+      ${s.photo?`<img src="${s.photo}" class="sighting-photo">`:''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">
+        ${cats.filter(c=>c.owner===me.id).map(c=>{
+          const prob=terrProbability(c,s.lat||OUD[0],s.lng||OUD[1]);
+          return`<button class="btn btn-sm btn-primary" onclick="claimSighting('${s.id}','${c.id}','')">
+            ${c.emoji||'🐱'} ${c.name} (${prob}%)</button>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+    return;
+  }
+  c=sightings.filter(s=>s.status==='confirmed'&&myCatIds.includes(s.catId));
   if(!c.length){el.innerHTML=`<div class="empty-state"><div class="big-icon">📍</div>Nog geen bevestigde spottings van jouw katten.</div>`;return;}
   el.innerHTML=c.map(s=>{
     const cat=cats.find(c=>c.id===s.catId);
@@ -1028,34 +1198,10 @@ function showDetail(catId){
   selectedCat=catId;
   const cat=cats.find(c=>c.id===catId);if(!cat)return;
   const isOwn=me&&cat.owner===me.id;
-  document.getElementById('detail-name').innerHTML=`${cat.name}${cat.lost?`<span class="tag tag-lost" style="font-size:0.62rem">🚨 Vermist</span>`:''}`;
-  const ph=document.getElementById('detail-photo');
-  ph.innerHTML=cat.photo?`<img src="${cat.photo}">`:(breedEmoji(cat.breed));
   const owner=users.find(u=>u.id===cat.owner);
-  // Only show address and owner to the owner themselves
   const metaParts=[cat.breed];
   if(cat.birthdate){const age=calcAge(cat.birthdate);if(age)metaParts.push(age);}
-  if(isOwn){
-    const streetOnly=cat.address.split(',')[0];
-    metaParts.push(streetOnly);
-  }
-  document.getElementById('detail-meta').textContent=metaParts.join(' · ');
-  // Main photo + gallery
-  const photoHtml=cat.photo
-    ?`<img src="${cat.photo}" class="cat-main-photo" data-fs="${cat.photo}" onclick="openPhotoFullscreen(this.dataset.fs)">`
-    :`<div class="cat-main-photo-placeholder">${breedEmoji(cat.breed)}</div>`;
-  const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" class="gallery-thumb" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
-  const galleryHtml=extraHtml?`<div class="photo-gallery">${extraHtml}</div>`:'';
-  // Remove old photo wraps to prevent duplication
-  document.querySelectorAll('.detail-photo-wrap').forEach(el=>el.remove());
-  // Use the existing detail-photo element as photo container
-  const ph2=document.getElementById('detail-photo');
-  ph2.style.display='flex';
-  ph2.style.flexDirection='column';
-  ph2.style.gap='5px';
-  ph2.innerHTML=photoHtml+(galleryHtml||'');
-  const bioEl=document.getElementById('detail-bio');
-  bioEl.textContent=cat.bio;
+  if(isOwn){metaParts.push(cat.address.split(',')[0]);}
   const n=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed').length;
   let btns=`<button class="btn btn-primary btn-sm" onclick="openSpotForCat('${cat.id}')">🐾 Gespot!</button>`;
   btns+=`<span style="font-size:0.74rem;color:var(--mid);align-self:center">${n} bevestigd${n!==1?'e':''} spot${n!==1?'s':''}</span>`;
@@ -1066,15 +1212,54 @@ function showDetail(catId){
     else btns+=`<button class="btn btn-sm" style="background:#d1f0e0;color:#1a6636" onclick="markFound('${cat.id}')">✅ Gevonden!</button>`;
     btns+=`<button class="btn btn-sm" style="background:#fde8e8;color:#9b2020;margin-left:auto" onclick="confirmDeleteCat('${cat.id}')">🗑️ Verwijderen</button>`;
   }
-  document.getElementById('detail-actions').innerHTML=btns;
-  document.getElementById('cat-detail').classList.add('open');
-  renderCatsList();renderTerr(catId);map.panTo([cat.lat,cat.lng]);
+  if(isMobile()){
+    // On mobile: show as proper modal
+    document.getElementById('mobile-cat-modal-name').innerHTML=
+      `${cat.name}${cat.lost?'<span class="tag tag-lost" style="font-size:0.62rem;margin-left:8px">🚨 Vermist</span>':''}`;
+    // Build full profile body
+    const age=cat.birthdate?calcAge(cat.birthdate):'';
+    const metaParts=[cat.breed];
+    if(age)metaParts.push(age);
+    if(isOwn){const s=cat.address.split(',')[0];metaParts.push(s);}
+    const photoHtml=cat.photo
+      ?`<img src="${cat.photo}" data-fs="${cat.photo}" onclick="openPhotoFullscreen(this.dataset.fs)" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px;cursor:pointer;">`
+      :`<div style="width:100%;height:120px;background:linear-gradient(135deg,#c8b8a2,#a89880);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:3rem;margin-bottom:10px;">${cat.emoji||'🐱'}</div>`;
+    const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;">`).join('');
+    document.getElementById('mobile-cat-modal-body').innerHTML=`
+      ${photoHtml}
+      ${extraHtml?`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">${extraHtml}</div>`:''}
+      <div style="font-size:0.8rem;color:var(--mid);margin-bottom:6px;">${metaParts.join(' · ')}</div>
+      <div style="font-size:0.88rem;line-height:1.6;margin-bottom:14px;">${cat.bio}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${btns}
+      </div>`;
+    openModal('mobile-cat-modal');
+    renderSightMkrs();renderTerr(catId);map.panTo([cat.lat,cat.lng]);
+  } else {
+    // Desktop — rebuild detail panel fresh
+    const photoHtml=cat.photo
+      ?`<img src="${cat.photo}" class="cat-main-photo" data-fs="${cat.photo}" onclick="openPhotoFullscreen(this.dataset.fs)">`
+      :`<div class="cat-main-photo-placeholder">${breedEmoji(cat.breed)}</div>`;
+    const extraHtml=(cat.extraPhotos||[]).map(p=>`<img src="${p}" class="gallery-thumb" data-fs="${p}" onclick="openPhotoFullscreen(this.dataset.fs)">`).join('');
+    const galleryHtml=extraHtml?`<div class="photo-gallery">${extraHtml}</div>`:'';
+    document.getElementById('detail-name').innerHTML=`${cat.name}${cat.lost?'<span class="tag tag-lost" style="font-size:0.62rem">🚨 Vermist</span>':''}`;
+    document.getElementById('detail-meta').textContent=metaParts.join(' · ');
+    const ph=document.getElementById('detail-photo');
+    ph.style.cssText='display:flex;flex-direction:column;gap:5px;';
+    ph.innerHTML=photoHtml+(galleryHtml||'');
+    document.getElementById('detail-bio').textContent=cat.bio;
+    document.getElementById('detail-actions').innerHTML=btns;
+    document.getElementById('cat-detail').classList.add('open');
+    renderCatsList();renderSightMkrs();renderTerr(catId);map.panTo([cat.lat,cat.lng]);
+  }
 }
 
 function closeDetail(){
   document.getElementById('cat-detail').classList.remove('open');
-  selectedCat=null;Object.values(terrLayers).forEach(l=>map.removeLayer(l));terrLayers={};
-  renderCatsList();
+  closeModal('mobile-cat-modal');
+  selectedCat=null;
+  Object.values(terrLayers).forEach(l=>map.removeLayer(l));terrLayers={};
+  renderCatsList();renderSightMkrs();
 }
 
 // LOST
@@ -1176,19 +1361,59 @@ async function submitSighting(){
   if(pendingSpotPhoto){
     spotPhotoUrl=await uploadPhoto(pendingSpotPhoto,'sightings');
   }
+  // Determine status: auto-confirm if within territory and no photo
+  let status='pending';
+  if(catId==='unknown'){
+    status='unmatched';
+  } else if(!spotPhotoUrl){
+    // No photo — check if within territory
+    const cat=cats.find(c=>c.id===catId);
+    if(cat){
+      const conf=sightings.filter(s=>s.catId===catId&&s.status==='confirmed');
+      const allPts=[{lat:cat.lat,lng:cat.lng},...conf.map(s=>({lat:s.lat,lng:s.lng}))];
+      // Calculate territory radius (same as renderTerr)
+      let radius=150;
+      allPts.forEach(p=>{
+        const d=map.distance([cat.lat,cat.lng],[p.lat,p.lng])+80;
+        if(d>radius)radius=d;
+      });
+      const distFromHome=map.distance([lat,lng],[cat.lat,cat.lng]);
+      if(distFromHome<=radius){
+        status='confirmed'; // auto-confirm: within territory
+      }
+    }
+  }
   const s={id:'s'+Date.now(),catId:catId==='unknown'?null:catId,location:loc||'Onbekend',lat,lng,
     time:time||new Date().toISOString().slice(0,16),notes,photo:spotPhotoUrl,
-    status:catId==='unknown'?'unmatched':'pending',reporter};
+    status,reporter};
   sightings.push(s);
   await sb.from('sightings').insert({
     id:s.id,cat_id:s.catId,location:s.location,lat:s.lat,lng:s.lng,
     spotted_at:s.time,notes:s.notes,photo:s.photo,status:s.status,reporter:s.reporter
   });
+  if(catId==='unknown'){
+    // Notify owners of cats within 500m + all lost cat owners
+    const nearbyOwnerIds=new Set();
+    cats.forEach(c=>{
+      const isNearby=gd(lat,lng,c.lat,c.lng)<0.0045;
+      const isLost=c.lost;
+      if(isNearby||isLost)nearbyOwnerIds.add(c.owner);
+    });
+    nearbyOwnerIds.forEach(ownerId=>{
+      const ownerCats=cats.filter(c=>c.owner===ownerId&&(gd(lat,lng,c.lat,c.lng)<0.0045||c.lost));
+      const catNames=ownerCats.map(c=>c.name).join(', ');
+      notifs.unshift({id:'n'+Date.now(),title:'❓ Onbekende kat gespot!',
+        body:`${reporter||'Iemand'} zag een onbekende kat bij ${s.location}. Is het ${catNames}?`,
+        time:new Date().toISOString(),unread:true,type:'unmatched',
+        sightingId:s.id,lat,lng,photo:spotPhotoUrl,ownerId});
+    });
+  }
   if(catId&&catId!=='unknown'){
     const cat=cats.find(c=>c.id===catId);
     if(cat){
+      const autoMsg=status==='confirmed'?' (automatisch bevestigd — binnen territorium)':'. Bevestig de spotting.';
       notifs.unshift({id:'n'+Date.now(),title:`📍 ${cat.name} is gespot!`,
-        body:`${reporter} zag ${cat.name} bij ${s.location}. Bevestig de spotting.`,
+        body:`${reporter} zag ${cat.name} bij ${s.location}${autoMsg}`,
         time:new Date().toISOString(),unread:true,type:'sighting',catId});
       // EMAIL HOOK — vervang door echte Supabase Edge Function call zodra live
       if(cat.email){
@@ -1203,7 +1428,13 @@ async function submitSighting(){
   }
   closeModal('spot-modal');clearSpotForm();renderAll();
   const cat=cats.find(c=>c.id===catId);
-  toast(cat?`Spotting van ${cat.name} verstuurd!`:'Bedankt! We proberen de kat te matchen.');
+  if(status==='confirmed'){
+    toast(`✅ Spotting van ${cat?cat.name:''} automatisch bevestigd — locatie binnen territorium!`);
+    if(selectedCat===catId)renderTerr(catId);
+  } else {
+    toast(cat?`Spotting van ${cat.name} verstuurd! Wacht op bevestiging.`:'Bedankt! We proberen de kat te matchen.');
+  }
+  renderAll();
   if(cat&&me&&cat.owner===me.id)switchTab('pending');else switchTab('alerts');
 }
 
@@ -1361,7 +1592,6 @@ async function saveCat(){
   const addr=document.getElementById('f-addr').value.trim();
   const breed=document.getElementById('f-breed').value.trim();
   const bio=document.getElementById('f-bio').value.trim();
-  const email=me.email||''; // use account email
   const birthdate=document.getElementById('f-birthdate').value||null;
   if(!name||!addr){toast('Vul naam en adres in.',true);return;}
   // Upload photos (Storage or base64 fallback)
@@ -1382,12 +1612,11 @@ async function saveCat(){
   const addrOk=document.getElementById('addr-st').classList.contains('addr-ok')||addrInput.dataset.manualOk==='1';
   if(editCatId){
     const cat=cats.find(c=>c.id===editCatId);
-    Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:me.email||'',
+    Object.assign(cat,{name,address:addr,breed:breed||cat.breed,bio:bio||cat.bio,email:'',
       photo:mainPhotoUrl||cat.photo,thumbPos:currentThumbPos,birthdate,addrOk,extraPhotos,
       lat:verLat||cat.lat,lng:verLng||cat.lng,emoji:currentEmoji});
     const {error:updateErr}=await sb.from('cats').update({
-      name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
-      photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
+      name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,photo:cat.photo,addr_ok:cat.addrOk,lat:cat.lat,lng:cat.lng,lost:cat.lost,
       emoji:cat.emoji,extra_photos:JSON.stringify(extraPhotos),thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
     }).eq('id',cat.id);
     if(updateErr){console.error('Update error:',updateErr);toast(`Fout: ${updateErr.message}`,true);return;}
@@ -1395,13 +1624,12 @@ async function saveCat(){
   }else{
     const lat=verLat||(OUD[0]+(Math.random()-.5)*.01);
     const lng=verLng||(OUD[1]+(Math.random()-.5)*.01);
-    const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email,
+    const cat={id:'c'+Date.now(),name,address:addr,breed:breed||'Onbekend',bio:bio||'Nog geen bio.',email:'',
       owner:me.id,photo:mainPhotoUrl||null,thumbPos:currentThumbPos,birthdate,
       emoji:currentEmoji,extraPhotos,lat,lng,lost:false,addrOk};
     cats.push(cat);users.find(u=>u.id===me.id)?.cats.push(cat.id);
     const {error:insertErr}=await sb.from('cats').insert({
-      id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,email:cat.email,
-      owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
+      id:cat.id,name:cat.name,address:cat.address,breed:cat.breed,bio:cat.bio,owner_id:cat.owner,photo:cat.photo,emoji:cat.emoji,lat:cat.lat,lng:cat.lng,
       lost:cat.lost,addr_ok:cat.addrOk,extra_photos:JSON.stringify(extraPhotos),
       thumb_pos:currentThumbPos,birthdate:cat.birthdate||null
     });
@@ -1471,11 +1699,10 @@ async function doRegister(){
   if(password.length<6){errEl.textContent='Wachtwoord moet minstens 6 tekens zijn.';return;}
   if(password!==password2){errEl.textContent='Wachtwoorden komen niet overeen.';return;}
   if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())){errEl.textContent='Naam al in gebruik.';return;}
-  const email=document.getElementById('reg-email')?.value.trim()||'';
   const hashedPw=await hashPassword(password);
-  const u={id:'u'+Date.now(),name,pin:hashedPw,email,cats:[]};
+  const u={id:'u'+Date.now(),name,pin:hashedPw,email:'',cats:[]};
   users.push(u);
-  await sb.from('users').insert({id:u.id,name:u.name,pin:u.pin,email:u.email});
+  await sb.from('users').insert({id:u.id,name:u.name,pin:u.pin});
   setMe(u);closeModal('login-modal');
   document.getElementById('reg-name').value='';
   document.getElementById('reg-password').value='';
@@ -1505,7 +1732,21 @@ function openModal(id){
     noLogin.style.display=me?'none':'block';fields.style.display=me?'block':'none';
     if(!editCatId){
       document.getElementById('cat-modal-title').textContent='Kat registreren';
-      clearCatForm(); // always clear when adding a new cat
+      clearCatForm();
+      // Pre-fill address from last own cat
+      if(me){
+        const myCats=cats.filter(c=>c.owner===me.id);
+        if(myCats.length>0){
+          const lastCat=myCats[myCats.length-1];
+          const addrEl=document.getElementById('f-addr');
+          addrEl.value=lastCat.address||'';
+          addrEl.dataset.manualOk='true';
+          verLat=lastCat.lat; verLng=lastCat.lng;
+          document.getElementById('addr-st').textContent=
+            lastCat.addrOk?`✓ Zelfde adres als ${lastCat.name}`:'';
+          document.getElementById('addr-st').className='addr-status addr-ok';
+        }
+      }
     }
   }
   if(id==='spot-modal'){
@@ -1515,7 +1756,7 @@ function openModal(id){
     const repEl=document.getElementById('sp-reporter');
     if(repEl&&me)repEl.value=me.name;
   }
-  if(id==='login-modal'){buildPinGrids();resetLoginPin();}
+  if(id==='login-modal'){resetLoginPin();}
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');pickingLoc=false;document.getElementById('map-hint').classList.remove('visible');}
 function switchTab(tab){
@@ -1561,6 +1802,9 @@ document.addEventListener('click',e=>{
   const pill=document.getElementById('user-pill');
   if(menu&&!menu.contains(e.target)&&!pill.contains(e.target))menu.classList.remove('open');
 });
+// Supabase scheduled job (run monthly via Dashboard > Database > Extensions > pg_cron):
+// SELECT cron.schedule('cleanup-old-sightings','0 0 1 * *',
+//   $$DELETE FROM sightings WHERE status='unmatched' AND created_at < NOW() - INTERVAL '6 months'$$);
 async function loadFromSupabase(){
   try{
     const [u,c,s]=await Promise.all([
@@ -2071,18 +2315,42 @@ function backToStep1(){
   selectedSpotCatId=null;
 }
 
+let spotFilterRadius=0.0045; // default 500m in degrees
+
 function buildCatPicker(){
   const picker=document.getElementById('sp-cat-picker');
   const lat=pickedLat||currentLat||OUD[0];
   const lng=pickedLng||currentLng||OUD[1];
+
+  // Filter buttons
+  const filters=[
+    {label:'500m',val:0.0045},
+    {label:'1km',val:0.009},
+    {label:'5km',val:0.045},
+    {label:'10km',val:0.09},
+    {label:'🚨 Vermist',val:-1},
+    {label:'Alle',val:999},
+  ];
+  const filterHtml=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;">
+    ${filters.map(f=>`<button class="btn btn-sm ${spotFilterRadius===f.val?'btn-primary':'btn-outline'}"
+      style="padding:4px 10px;font-size:0.7rem;"
+      onclick="spotFilterRadius=${f.val};buildCatPicker()">${f.label}</button>`).join('')}
+  </div>`;
+
+  // Apply filter
+  let filtered;
+  if(spotFilterRadius===-1){
+    filtered=cats.filter(c=>c.lost).map(c=>({cat:c,dist:gd(lat,lng,c.lat,c.lng)}));
+  } else if(spotFilterRadius===999){
+    filtered=cats.map(c=>({cat:c,dist:gd(lat,lng,c.lat,c.lng)}));
+  } else {
+    filtered=cats
+      .map(c=>({cat:c,dist:gd(lat,lng,c.lat,c.lng)}))
+      .filter(x=>x.dist<=spotFilterRadius);
+  }
+  const sorted=filtered.sort((a,b)=>a.dist-b.dist);
   
-  // Sort cats by distance
-  const sorted=cats
-    .map(c=>({cat:c,dist:gd(lat,lng,c.lat,c.lng)}))
-    .sort((a,b)=>a.dist-b.dist)
-    .slice(0,8); // max 8 cats shown
-  
-  let html=sorted.map(({cat,dist})=>{
+  let html=filterHtml+sorted.map(({cat,dist})=>{
     const distM=Math.round(dist*111000);
     const distStr=distM<1000?distM+'m':(dist*111).toFixed(1)+'km';
     return`<div class="sp-cat-opt" id="sp-opt-${cat.id}" onclick="selectSpotCat('${cat.id}')">
@@ -2097,6 +2365,13 @@ function buildCatPicker(){
   }).join('');
   
   // Add "not sure" option
+  if(!sorted.length){
+    html+=`<div class="empty-state" style="padding:16px 4px;">
+      <div class="big-icon">🔍</div>
+      Geen katten gevonden binnen dit bereik.
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="spotFilterRadius=999;buildCatPicker()">Toon alle katten</button>
+    </div>`;
+  }
   html+=`<div class="sp-cat-opt" id="sp-opt-unknown" onclick="selectSpotCat('unknown')">
     <div class="sp-cat-opt-thumb" style="font-size:1.6rem;">🔍</div>
     <div class="sp-cat-opt-info">
@@ -2111,6 +2386,7 @@ function buildCatPicker(){
 
 function selectSpotCat(catId){
   selectedSpotCatId=catId;
+  setTimeout(showSpotPhotoHint,100);
   // Update visual selection
   document.querySelectorAll('.sp-cat-opt').forEach(el=>el.classList.remove('selected'));
   document.querySelectorAll('.sp-cat-opt').forEach(el=>{
@@ -2139,12 +2415,253 @@ function openSpotForCat(catId){
   // Otherwise stay on step 1 so user picks location first
 }
 
-// MOBILE SIDEBAR TOGGLE
+// MOBILE BOTTOM NAV
+function isMobile(){return window.innerWidth<=700;}
+
+function mobileTab(tab){
+  if(!isMobile())return;
+  const sheet=document.getElementById('mobile-sheet');
+  const content=document.getElementById('mobile-sheet-content');
+  const backdrop=document.getElementById('mobile-sheet-backdrop');
+  const isOpen=sheet.classList.contains('open');
+  const currentActive=document.querySelector('.mobile-nav-item.active');
+  const isSameTab=currentActive&&currentActive.id==='nav-'+tab;
+  // Tapping same tab while open → close
+  if(isSameTab&&isOpen){closeMobileSheet();return;}
+  // Always update active state
+  document.querySelectorAll('.mobile-nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+tab)?.classList.add('active');
+  const titles={katten:'🐱 Katten in de buurt',gespot:'📍 Mijn spottings',bevestigen:'✅ Bevestigen',meldingen:'🔔 Meldingen'};
+  document.getElementById('mobile-sheet-title').textContent=titles[tab]||'';
+  let html='';
+  if(tab==='katten'){
+    // Re-render cats list into sheet
+    html=buildCatsHTML();
+  } else if(tab==='gespot'){
+    html=buildSightingsHTML();
+  } else if(tab==='bevestigen'){
+    html=buildPendingHTML();
+  } else if(tab==='meldingen'){
+    html=buildAlertsHTML();
+    notifs.forEach(n=>n.unread=false);
+    updateMobileBadges();
+  }
+  content.innerHTML=html;
+  // Open immediately — no close/reopen cycle
+  sheet.classList.add('open');
+  backdrop.classList.add('open');
+}
+
+function closeMobileSheet(){
+  document.getElementById('mobile-sheet').classList.remove('open');
+  document.getElementById('mobile-sheet-backdrop').classList.remove('open');
+  document.querySelectorAll('.mobile-nav-item').forEach(el=>el.classList.remove('active'));
+}
+
+function buildCatsHTML(){
+  const userLat=currentLat,userLng=currentLng;
+  const myCats=me?cats.filter(c=>c.owner===me.id):[];
+  const myCatIds=myCats.map(c=>c.id);
+  let html='<div style="padding-top:4px;">';
+  if(myCats.length){
+    html+=`<div class="section-label">Mijn katten</div>`;
+    html+=myCats.map(cat=>catCardHtml(cat,true)).join('');
+  }
+  if(!userLat){
+    html+=`<div class="info-box" style="margin-top:8px;">📍 Klik op de kaart of gebruik GPS.<button class="btn btn-forest btn-sm" style="margin-top:7px;width:100%" onclick="useGPS()">📍 GPS gebruiken</button></div>`;
+  } else {
+    const nearby=cats.filter(c=>!myCatIds.includes(c.id)&&gd(userLat,userLng,c.lat,c.lng)<0.0045);
+    if(nearby.length){
+      html+=`<div class="section-label" style="margin-top:8px">In de buurt</div>`;
+      html+=nearby.sort((a,b)=>gd(userLat,userLng,a.lat,a.lng)-gd(userLat,userLng,b.lat,b.lng)).map(cat=>catCardHtml(cat,false)).join('');
+    } else if(!myCats.length){
+      html+=`<div class="empty-state"><div class="big-icon">🔍</div>Geen katten binnen 500m.</div>`;
+    }
+  }
+  html+='</div>';
+  return html;
+}
+
+function buildSightingsHTML(){
+  if(!me)return`<div class="empty-state"><div class="big-icon">🔐</div>Log in om spottings te zien.</div>`;
+  const myCatIds=cats.filter(c=>c.owner===me.id).map(c=>c.id);
+  const c=sightings.filter(s=>s.status==='confirmed'&&myCatIds.includes(s.catId));
+  if(!c.length)return`<div class="empty-state"><div class="big-icon">📍</div>Nog geen bevestigde spottings.</div>`;
+  return c.map(s=>{
+    const cat=cats.find(x=>x.id===s.catId);
+    return`<div class="sighting-card" style="margin-bottom:8px;">
+      <div class="sighting-header"><div class="sighting-cat">${cat?cat.name:'?'}</div><div class="sighting-time">${fmt(s.time)}</div></div>
+      <div style="color:var(--mid)">📍 ${s.location}</div>
+      ${s.notes?`<div style="font-size:0.75rem;color:var(--mid);font-style:italic">"${s.notes}"</div>`:''}
+      ${s.photo?`<img src="${s.photo}" class="sighting-photo">`:''}
+      <div class="sighting-actions">
+        <button class="btn btn-sm" style="background:#fef3cd;color:#856404" onclick="undoConfirmS('${s.id}')">↩ Ongedaan</button>
+        <button class="btn btn-sm" style="background:#fde8e8;color:#9b2020" onclick="confirmDeleteSighting('${s.id}')">🗑️</button>
+      </div></div>`;
+  }).join('');
+}
+
+function buildPendingHTML(){
+  if(!me)return`<div class="empty-state"><div class="big-icon">🔐</div>Log in om te bevestigen.</div>`;
+  const myCats=cats.filter(c=>c.owner===me.id).map(c=>c.id);
+  const mine=sightings.filter(s=>s.status==='pending'&&myCats.includes(s.catId));
+  if(!mine.length)return`<div class="empty-state"><div class="big-icon">✨</div>Alles bijgewerkt!</div>`;
+  return mine.map(s=>{
+    const cat=cats.find(c=>c.id===s.catId);
+    return`<div class="sighting-card" style="margin-bottom:8px;">
+      <div class="sighting-header"><div class="sighting-cat">${cat?cat.name:'?'}</div><div class="sighting-time">${fmt(s.time)}</div></div>
+      <div style="color:var(--mid)">📍 ${s.location}</div>
+      <div style="font-size:0.75rem;color:var(--mid)">Door: ${s.reporter||'Anoniem'}</div>
+      ${s.photo?`<img src="${s.photo}" class="sighting-photo">`:''}
+      <div class="sighting-actions">
+        <button class="btn btn-primary btn-sm" onclick="confirmS('${s.id}');closeMobileSheet()">✓ Ja!</button>
+        <button class="btn btn-sm" style="background:#fde8e8;color:#9b2020" onclick="denyS('${s.id}');closeMobileSheet()">✕ Nee</button>
+      </div></div>`;
+  }).join('');
+}
+
+function buildAlertsHTML(){
+  const lostAlerts=cats.filter(c=>c.lost).map(c=>({
+    id:'la-'+c.id,title:`🚨 ${c.name} is vermist!`,
+    body:(()=>{const p=c.address.split(',');const s=(p[0]||'').replace(/\s*\d+\s*$/,'').trim();const city=p[1]?p[1].trim().replace(/\d{4}/,'').trim():'';return`${c.name} (${c.breed}) vermist${s?' bij '+s:''}${city?' ('+city+')':''}.`;})(),
+    type:'lost',catId:c.id,time:new Date().toISOString(),unread:true
+  }));
+  const myCatIds=me?cats.filter(c=>c.owner===me.id).map(c=>c.id):[];
+  const filtered=notifs.filter(n=>
+    n.type==='info'||n.type==='lost'||
+    (me&&(myCatIds.includes(n.catId)||n.type==='unmatched'&&n.ownerId===me.id))
+  );
+  const all=[...lostAlerts,...filtered].slice(0,20);
+  const overLink=`<div style="text-align:center;padding:12px 0 4px;"><a href="#" onclick="openModal('over-modal');closeMobileSheet();return false;" style="font-size:0.75rem;color:var(--terracotta);text-decoration:none;"><span style="width:14px;height:14px;border-radius:50%;border:1px solid var(--terracotta);display:inline-flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-style:italic;font-size:0.65rem;margin-right:3px;">i</span>Over KattenKaart</a></div>`;
+  if(!all.length)return overLink+`<div class="empty-state"><div class="big-icon">🔔</div>Geen meldingen.</div>`;
+  return all.map(n=>`<div class="notif-item${n.unread?' unread':''}" style="margin-bottom:8px;">
+    <div class="notif-title">${n.title}</div>
+    <div style="font-size:0.77rem;margin-top:2px">${n.body}</div>
+    ${n.photo?`<img src="${n.photo}" style="width:100%;max-height:100px;object-fit:cover;border-radius:8px;margin-top:5px;">`:''}
+    ${n.type==='lost'?`<button class="btn btn-primary btn-sm" style="margin-top:7px" onclick="openSpotForCat('${n.catId}');closeMobileSheet()">🐾 Gezien!</button>`:''}
+    ${n.type==='unmatched'?`<div style="margin-top:7px;">
+      <div style="font-size:0.74rem;color:var(--mid);margin-bottom:5px;">Is het een van jouw katten?</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        ${cats.filter(c=>c.owner===me?.id).map(c=>`<button class="btn btn-sm btn-primary" onclick="claimSighting('${n.sightingId}','${c.id}','${n.id}');closeMobileSheet()">${c.emoji||'🐱'} ${c.name}</button>`).join('')}
+        <button class="btn btn-sm btn-outline" onclick="dismissNotif('${n.id}')">Niet mijn kat</button>
+      </div>
+    </div>`:''}
+    <div style="font-size:0.68rem;color:var(--mid);margin-top:4px">${fmt(n.time)}</div>
+  </div>`).join('');
+}
+
+function updateMobileBadges(){
+  if(!isMobile())return;
+  const myCatIds=me?cats.filter(c=>c.owner===me.id).map(c=>c.id):[];
+  const pending=sightings.filter(s=>s.status==='pending'&&myCatIds.includes(s.catId)).length;
+  const alerts=notifs.filter(n=>n.unread).length;
+  const bLabel=document.getElementById('mob-bevestigen-label');
+  const mLabel=document.getElementById('mob-meldingen-label');
+  if(bLabel)bLabel.textContent=pending?`Bevestigen (${pending})`:'Bevestigen';
+  if(mLabel)mLabel.textContent=alerts?`Meldingen (${alerts})`:'Meldingen';
+}
+
+// SPOT PHOTO HINT
+function updateSpotPhotoHint(){
+  const hint=document.getElementById('sp-photo-hint');
+  const prev=document.getElementById('sp-prev');
+  if(hint)hint.style.display='none'; // hide hint when photo is added
+}
+function showSpotPhotoHint(){
+  const hint=document.getElementById('sp-photo-hint');
+  const prev=document.getElementById('sp-prev');
+  if(!hint)return;
+  // Show hint only when cat is selected but no photo
+  const hasPhoto=prev&&prev.style.display!=='none'&&prev.src;
+  hint.style.display=(!hasPhoto&&selectedSpotCatId&&selectedSpotCatId!=='unknown')?'block':'none';
+}
+
+// TERRITORY PROBABILITY
+function terrProbability(cat, lat, lng){
+  const conf=sightings.filter(s=>s.catId===cat.id&&s.status==='confirmed');
+  const allPts=[{lat:cat.lat,lng:cat.lng},...conf.map(s=>({lat:s.lat,lng:s.lng}))];
+  let radius=150;
+  allPts.forEach(p=>{
+    const d=map.distance([cat.lat,cat.lng],[p.lat,p.lng])+80;
+    if(d>radius)radius=d;
+  });
+  const dist=map.distance([lat,lng],[cat.lat,cat.lng]);
+  if(dist<=radius*0.5)return 95;
+  if(dist<=radius)return 75;
+  if(dist<=radius*1.5)return 40;
+  if(dist<=radius*2)return 20;
+  return 5;
+}
+
+// CLAIM UNMATCHED SIGHTING
+async function claimSighting(sightingId, catId, notifId){
+  const s=sightings.find(x=>x.id===sightingId);
+  const cat=cats.find(c=>c.id===catId);
+  if(!s||!cat){toast('Spotting niet meer beschikbaar.',true);return;}
+  // Check if already claimed by someone else
+  if(s.catId&&s.catId!==catId&&s.status!=='unmatched'){
+    const claimedCat=cats.find(c=>c.id===s.catId);
+    toast(`Al geclaimd als ${claimedCat?claimedCat.name:'andere kat'}. Neem contact op met de eigenaar.`,true);
+    return;
+  }
+  const prob=terrProbability(cat,s.lat,s.lng);
+  s.catId=catId; s.status='pending'; s.claimedBy=me?.id;
+  await sb.from('sightings').update({cat_id:catId,status:'pending'}).eq('id',sightingId);
+  dismissNotif(notifId);
+  notifs.unshift({id:'n'+Date.now(),
+    title:`📍 ${cat.name} mogelijk gespot! (${prob}% kans)`,
+    body:`Geclaimd op basis van territorium — ${prob}% kans dat het ${cat.name} is. Klopt het?`,
+    time:new Date().toISOString(),unread:true,type:'sighting',catId,sightingId});
+  renderAll();
+  toast(`Geclaimd als ${cat.name} (${prob}% kans)! Check Bevestigen.`);
+  if(isMobile())mobileTab('bevestigen');else switchTab('pending');
+}
+
+async function unclaimSighting(sightingId){
+  const s=sightings.find(x=>x.id===sightingId);
+  if(!s)return;
+  const lat=s.lat, lng=s.lng;
+  s.catId=null; s.status='unmatched'; s.claimedBy=null;
+  await sb.from('sightings').update({cat_id:null,status:'unmatched'}).eq('id',sightingId);
+  // Re-notify nearby owners
+  const nearbyOwnerIds=new Set();
+  cats.forEach(c=>{
+    if(gd(lat,lng,c.lat,c.lng)<0.0045||c.lost)nearbyOwnerIds.add(c.owner);
+  });
+  nearbyOwnerIds.forEach(ownerId=>{
+    const ownerCats=cats.filter(c=>c.owner===ownerId&&(gd(lat,lng,c.lat,c.lng)<0.0045||c.lost));
+    const catNames=ownerCats.map(c=>c.name).join(', ');
+    notifs.unshift({id:'n'+Date.now(),title:'❓ Onbekende kat — opnieuw gespot!',
+      body:`Eerder geclaimde spotting bij ${s.location} is teruggezet naar onbekend. Is het ${catNames}?`,
+      time:new Date().toISOString(),unread:true,type:'unmatched',
+      sightingId,lat,lng,photo:s.photo,ownerId});
+  });
+  renderAll();
+  toast('Spotting teruggezet naar onbekend en opnieuw verstuurd.');
+}
+
+async function denyAndUnclaim(sightingId){
+  // Deny the sighting and put it back as unmatched so others can claim
+  await denyS(sightingId);
+  await unclaimSighting(sightingId);
+}
+
+function dismissNotif(notifId){
+  const idx=notifs.findIndex(n=>n.id===notifId);
+  if(idx>-1)notifs.splice(idx,1);
+  renderAlerts();
+  if(typeof buildAlertsHTML==='function'){}
+  updateBadges();
+}
+
+// MOBILE SIDEBAR TOGGLE (kept for desktop)
 function toggleSidebar(){
+  if(isMobile())return;
   const sb=document.getElementById('sidebar');
   sb.classList.toggle('collapsed');
 }
 function expandSidebar(){
+  if(isMobile())return;
   const sb=document.getElementById('sidebar');
   if(sb.classList.contains('collapsed'))sb.classList.remove('collapsed');
 }
